@@ -42,6 +42,7 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
     dom_data = [t['median_dom'] for t in metro_trends]
     pending_ratio_data = [t['pending_ratio'] if t['pending_ratio'] else 0 for t in metro_trends]
     homes_sold_data = [t['homes_sold'] for t in metro_trends]
+    median_price_data = [t['median_sale_price'] for t in metro_trends]
 
     # Calculate flipper metrics (current month)
     months_supply = round(current['inventory'] / current['homes_sold'], 1) if current['homes_sold'] > 0 else 0
@@ -108,6 +109,7 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
 
     # Prepare JSON data for JavaScript (12-month default view only)
     labels_json = json.dumps(labels_formatted)
+    periods_json = json.dumps(labels)
     inventory_json = json.dumps(inventory_data)
     new_listings_json = json.dumps(new_listings_data)
     pending_json = json.dumps(pending_data)
@@ -115,11 +117,12 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
     dom_json = json.dumps(dom_data)
     pending_ratio_json = json.dumps(pending_ratio_data)
     homes_sold_json = json.dumps(homes_sold_data)
+    median_price_json = json.dumps(median_price_data)
     city_trends_json = json.dumps(city_trends)
-
-    # For large data, reference the JSON file path instead of embedding
-    data_file_name = Path(data_file).name
+    full_metro_trends_json = json.dumps(full_metro_trends)
+    full_city_trends_json = json.dumps(full_city_trends)
     available_cities_json = json.dumps(available_cities)
+    period_json = json.dumps(period)
 
     # Pre-build YoY change strings
     inventory_yoy_str = f"up {inventory_yoy}%" if inventory_yoy > 0 else f"down {abs(inventory_yoy)}%"
@@ -187,12 +190,12 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
                     <p class="text-sm text-gray-400" id="dateRangeDisplay">Last 12 Months (Default)</p>
                 </div>
                 <div class="flex flex-wrap gap-2">
-                    <button onclick="setDateRange('6m', this)" class="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm font-medium">Last 6 Months</button>
-                    <button onclick="setDateRange('12m', this)" class="px-4 py-2 bg-blue-500/40 border-2 border-blue-500 rounded-lg text-sm font-bold">Last 12 Months</button>
-                    <button onclick="setDateRange('ytd', this)" class="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm font-medium">YTD 2025</button>
-                    <button onclick="setDateRange('2y', this)" class="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm font-medium">Last 2 Years</button>
-                    <button onclick="setDateRange('5y', this)" class="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm font-medium">Last 5 Years</button>
-                    <button onclick="setDateRange('all', this)" class="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm font-medium">All Time</button>
+                    <button data-range="6m" onclick="setDateRange('6m', this)" class="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm font-medium">Last 6 Months</button>
+                    <button data-range="12m" onclick="setDateRange('12m', this)" class="px-4 py-2 bg-blue-500/40 border-2 border-blue-500 rounded-lg text-sm font-bold">Last 12 Months</button>
+                    <button data-range="ytd" onclick="setDateRange('ytd', this)" class="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm font-medium">YTD 2025</button>
+                    <button data-range="2y" onclick="setDateRange('2y', this)" class="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm font-medium">Last 2 Years</button>
+                    <button data-range="5y" onclick="setDateRange('5y', this)" class="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm font-medium">Last 5 Years</button>
+                    <button data-range="all" onclick="setDateRange('all', this)" class="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm font-medium">All Time</button>
                 </div>
             </div>
         </div>
@@ -286,10 +289,10 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
                             <option value="pending">Pending Sales Only</option>
                         </select>
                         <button onclick="downloadChartImage('inventoryChart', 'inventory_dynamics')" class="px-3 py-2 bg-green-500/20 hover:bg-green-500/40 border border-green-500/50 rounded-lg transition text-sm">
-                            <span>📊 PNG</span>
+                            <span>Download PNG</span>
                         </button>
                         <button onclick="exportChartCSV('inventoryChart', 'inventory_dynamics')" class="px-3 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm">
-                            <span>📄 CSV</span>
+                            <span>Download CSV</span>
                         </button>
                     </div>
                 </div>
@@ -377,10 +380,10 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
                 </div>
                 <div class="flex gap-2">
                     <button onclick="downloadChartImage('multiCityChart', 'multi_city_comparison')" class="px-3 py-2 bg-green-500/20 hover:bg-green-500/40 border border-green-500/50 rounded-lg transition text-sm">
-                        <span>📊 PNG</span>
+                        <span>Download PNG</span>
                     </button>
                     <button onclick="exportChartCSV('multiCityChart', 'multi_city_comparison')" class="px-3 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm">
-                        <span>📄 CSV</span>
+                        <span>Download CSV</span>
                     </button>
                 </div>
             </div>
@@ -602,8 +605,12 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
             }
         };
 
+        const rangeButtonDefaultClass = 'px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm font-medium';
+        const rangeButtonActiveClass = 'px-4 py-2 bg-blue-500/40 border-2 border-blue-500 rounded-lg text-sm font-bold';
+
         // Data (12-month embedded for fast initial load)
         const labels = ''' + labels_json + ''';
+        const defaultPeriods = ''' + periods_json + ''';
         const inventoryData = ''' + inventory_json + ''';
         const newListingsData = ''' + new_listings_json + ''';
         const pendingData = ''' + pending_json + ''';
@@ -611,34 +618,18 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
         const domData = ''' + dom_json + ''';
         const pendingRatioData = ''' + pending_ratio_json + ''';
         const homesSoldData = ''' + homes_sold_json + ''';
+        const medianPriceData = ''' + median_price_json + ''';
+        const currentPeriod = ''' + period_json + ''';
 
         // City trends data (12-month default, top 5 cities)
         const cityTrends = ''' + city_trends_json + ''';
-
-        // Load full historical data from JSON file (async, for date range selector)
-        let fullMetroTrends = [];
-        let fullCityTrends = {};
+        const fullMetroTrends = ''' + full_metro_trends_json + ''';
+        const fullCityTrends = ''' + full_city_trends_json + ''';
         const availableCities = ''' + available_cities_json + ''';
 
         // Current date range state
         let currentRange = '12m';
         let filteredMetroData = null;
-        let dataLoaded = false;
-
-        // Load full data from JSON file
-        fetch(''' + json.dumps(data_file_name) + ''')
-            .then(response => response.json())
-            .then(data => {{
-                fullMetroTrends = data.full_metro_trends || [];
-                fullCityTrends = data.full_city_trends || {};
-                dataLoaded = true;
-                console.log('Full historical data loaded:', fullMetroTrends.length, 'months');
-            }})
-            .catch(error => {{
-                console.error('Error loading full data:', error);
-                // Fallback to 12-month data only
-                dataLoaded = true;
-            }});
 
         // Format period labels helper
         function formatLabels(periods) {
@@ -649,73 +640,75 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
             });
         }
 
+        function getEmbeddedMetroData() {
+            return {
+                data: null,
+                label: 'Last 12 Months (Default)',
+                periods: defaultPeriods.slice(),
+                labels: labels.slice(),
+                inventory: inventoryData.slice(),
+                new_listings: newListingsData.slice(),
+                pending_sales: pendingData.slice(),
+                homes_sold: homesSoldData.slice(),
+                price_drops: priceDropsData.slice(),
+                median_dom: domData.slice(),
+                median_sale_price: medianPriceData.slice(),
+                pending_ratio: pendingRatioData.slice()
+            };
+        }
+
         // Filter metro data by date range
         function filterDataByRange(range) {
-            // If requesting 12-month data and fullMetroTrends not loaded yet, use embedded data
-            if (range === '12m' && fullMetroTrends.length === 0) {
-                return {{
-                    data: null,
-                    label: 'Last 12 Months (Default)',
-                    periods: labels.map((_, i) => {period}-{{'01': i}}), // placeholder
-                    labels: labels,
-                    inventory: inventoryData,
-                    new_listings: newListingsData,
-                    pending_sales: pendingData,
-                    homes_sold: homesSoldData,
-                    price_drops: priceDropsData,
-                    median_dom: domData,
-                    median_sale_price: labels.map(() => 0), // Not in default data
-                    pending_ratio: pendingRatioData
-                }};
-            }}
+            if (!Array.isArray(fullMetroTrends) || fullMetroTrends.length === 0) {
+                return getEmbeddedMetroData();
+            }
 
-            // For other ranges, wait for full data to load
-            if (fullMetroTrends.length === 0) {{
-                alert('Please wait for data to load...');
-                return filterDataByRange('12m'); // Fall back to 12-month
-            }}
-
-            const now = new Date('{period}-01');
+            const now = new Date(currentPeriod + '-01');
             let cutoffDate;
             let rangeLabel = '';
 
-            if (range === '6m') {{
+            if (range === '6m') {
                 cutoffDate = new Date(now.getFullYear(), now.getMonth() - 5, 1);
                 rangeLabel = 'Last 6 Months';
-            }} else if (range === '12m') {{
+            } else if (range === '12m') {
                 cutoffDate = new Date(now.getFullYear(), now.getMonth() - 11, 1);
                 rangeLabel = 'Last 12 Months (Default)';
-            }} else if (range === 'ytd') {{
+            } else if (range === 'ytd') {
                 cutoffDate = new Date(now.getFullYear(), 0, 1);
                 rangeLabel = 'YTD ' + now.getFullYear();
-            }} else if (range === '2y') {{
+            } else if (range === '2y') {
                 cutoffDate = new Date(now.getFullYear() - 2, now.getMonth(), 1);
                 rangeLabel = 'Last 2 Years';
-            }} else if (range === '5y') {{
+            } else if (range === '5y') {
                 cutoffDate = new Date(now.getFullYear() - 5, now.getMonth(), 1);
                 rangeLabel = 'Last 5 Years';
-            }} else if (range === 'all') {{
+            } else if (range === 'all') {
                 cutoffDate = new Date('2000-01-01');
                 rangeLabel = 'All Time (' + fullMetroTrends.length + ' months)';
-            }}
+            } else {
+                cutoffDate = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+                rangeLabel = 'Last 12 Months (Default)';
+            }
 
             const cutoffStr = cutoffDate.toISOString().slice(0, 7);
             const filtered = fullMetroTrends.filter(t => t.period >= cutoffStr);
+            const effective = filtered.length > 0 ? filtered : fullMetroTrends.slice(-12);
+            const labelText = filtered.length > 0 ? rangeLabel : 'Last 12 Months (Default)';
 
-            return {{
-                data: filtered,
-                label: rangeLabel,
-                periods: filtered.map(t => t.period),
-                labels: formatLabels(filtered.map(t => t.period)),
-                inventory: filtered.map(t => t.inventory),
-                new_listings: filtered.map(t => t.new_listings),
-                pending_sales: filtered.map(t => t.pending_sales),
-                homes_sold: filtered.map(t => t.homes_sold),
-                price_drops: filtered.map(t => t.price_drops),
-                median_dom: filtered.map(t => t.median_dom),
-                median_sale_price: filtered.map(t => t.median_sale_price),
-                pending_ratio: filtered.map(t => t.pending_ratio || 0)
-            }};
+            return {
+                data: effective,
+                label: labelText,
+                periods: effective.map(t => t.period),
+                labels: formatLabels(effective.map(t => t.period)),
+                inventory: effective.map(t => t.inventory),
+                new_listings: effective.map(t => t.new_listings),
+                pending_sales: effective.map(t => t.pending_sales),
+                homes_sold: effective.map(t => t.homes_sold),
+                price_drops: effective.map(t => t.price_drops),
+                median_dom: effective.map(t => t.median_dom),
+                median_sale_price: effective.map(t => t.median_sale_price),
+                pending_ratio: effective.map(t => t.pending_ratio || 0)
+            };
         }
 
         // Initialize with 12 month default
@@ -788,11 +781,12 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
             updateDomPendingChart();
 
             // Update active button styling
-            document.querySelectorAll('button[onclick^="setDateRange"]').forEach(btn => {
-                btn.className = 'px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm font-medium';
+            document.querySelectorAll('[data-range]').forEach(btn => {
+                btn.className = rangeButtonDefaultClass;
             });
-            if (clickedButton) {
-                clickedButton.className = 'px-4 py-2 bg-blue-500/40 border-2 border-blue-500 rounded-lg text-sm font-bold';
+            const buttonToActivate = clickedButton || document.querySelector(`[data-range="${range}"]`);
+            if (buttonToActivate) {
+                buttonToActivate.className = rangeButtonActiveClass;
             }
         }
 
@@ -1195,16 +1189,17 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
 
         // Get city data for multi-city chart
         function getMultiCityData(city, metric) {
-            if (!fullCityTrends[city]) return [];
+            const series = fullCityTrends[city] || cityTrends[city];
+            if (!series) return [];
 
             if (metric === 'inventory') {
-                return fullCityTrends[city].map(t => t.inventory);
+                return series.map(t => t.inventory);
             } else if (metric === 'sales') {
-                return fullCityTrends[city].map(t => t.homes_sold);
+                return series.map(t => t.homes_sold);
             } else if (metric === 'dom') {
-                return fullCityTrends[city].map(t => t.median_dom);
+                return series.map(t => t.median_dom);
             } else if (metric === 'price') {
-                return fullCityTrends[city].map(t => t.median_sale_price);
+                return series.map(t => t.median_sale_price);
             }
         }
 
@@ -1212,8 +1207,9 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
         function getMultiCityLabels() {
             if (selectedCities.length === 0) return [];
             const firstCity = selectedCities[0];
-            if (!fullCityTrends[firstCity]) return [];
-            return formatLabels(fullCityTrends[firstCity].map(t => t.period));
+            const series = fullCityTrends[firstCity] || cityTrends[firstCity];
+            if (!series) return [];
+            return formatLabels(series.map(t => t.period));
         }
 
         // Multi-city chart
@@ -1327,13 +1323,13 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
             const chartElement = document.getElementById(chartId);
             const url = chartElement.toDataURL('image/png');
             const link = document.createElement('a');
-            link.download = filename + '_' + '{period}' + '.png';
+            link.download = filename + '_' + currentPeriod + '.png';
             link.href = url;
             link.click();
         }
 
         // Export chart data to CSV
-        function exportChartCSV(chartId, filename) {{
+        function exportChartCSV(chartId, filename) {
             const chart = Chart.getChart(chartId);
             if (!chart) return;
 
@@ -1342,30 +1338,30 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
 
             // Build CSV content
             let csv = 'Period';
-            datasets.forEach(ds => {{
+            datasets.forEach(ds => {
                 csv += ',' + ds.label.replace(/,/g, ' ');
-            }});
+            });
             csv += '\\n';
 
             // Add data rows
-            labels.forEach((label, i) => {{
+            labels.forEach((label, i) => {
                 csv += label;
-                datasets.forEach(ds => {{
+                datasets.forEach(ds => {
                     const value = ds.data[i];
                     csv += ',' + (value !== null && value !== undefined ? value : '');
-                }});
+                });
                 csv += '\\n';
-            }});
+            });
 
             // Download CSV file
-            const blob = new Blob([csv], {{ type: 'text/csv' }});
+            const blob = new Blob([csv], { type: 'text/csv' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
-            link.download = filename + '_' + '{period}' + '.csv';
+            link.download = filename + '_' + currentPeriod + '.csv';
             link.href = url;
             link.click();
             URL.revokeObjectURL(url);
-        }}
+        }
 
         // Initialize
         generateCityCheckboxes();
