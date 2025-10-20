@@ -171,6 +171,11 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
         .selector:hover {{
             background: rgba(255, 255, 255, 0.15);
         }}
+        /* Ensure select dropdown options remain readable across platforms */
+        select.selector option {{
+            color: #111827; /* tailwind gray-900 */
+            background-color: #ffffff;
+        }}
     </style>
 </head>
 <body class="min-h-screen p-6">
@@ -1085,6 +1090,9 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
         // Update city chart when city changes
         document.getElementById('citySelector').addEventListener('change', function(e) {
             currentCity = e.target.value;
+            // Update labels to match the selected city's periods
+            const newLabels = formatLabels((cityTrends[currentCity] || []).map(t => t.period));
+            cityChart.data.labels = newLabels;
             cityChart.data.datasets = [{
                 label: getMetricLabel(currentMetric),
                 data: getCityData(currentCity, currentMetric),
@@ -1099,6 +1107,9 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
         // Update city chart when metric changes
         document.getElementById('cityMetric').addEventListener('change', function(e) {
             currentMetric = e.target.value;
+            // Keep labels aligned with the current city
+            const newLabels = formatLabels((cityTrends[currentCity] || []).map(t => t.period));
+            cityChart.data.labels = newLabels;
             cityChart.data.datasets = [{
                 label: getMetricLabel(currentMetric),
                 data: getCityData(currentCity, currentMetric),
@@ -1203,13 +1214,15 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
             }
         }
 
-        // Get multi-city labels (use first city's periods)
-        function getMultiCityLabels() {
+        // Build union of periods across selected cities (sorted)
+        function getMultiCityPeriods() {
             if (selectedCities.length === 0) return [];
-            const firstCity = selectedCities[0];
-            const series = fullCityTrends[firstCity] || cityTrends[firstCity];
-            if (!series) return [];
-            return formatLabels(series.map(t => t.period));
+            const set = new Set();
+            selectedCities.forEach(city => {
+                const series = (fullCityTrends[city] || cityTrends[city] || []);
+                series.forEach(t => set.add(t.period));
+            });
+            return Array.from(set).sort();
         }
 
         // Multi-city chart
@@ -1241,17 +1254,29 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
                 return;
             }
 
-            const labels = getMultiCityLabels();
+            const periods = getMultiCityPeriods();
+            const labels = formatLabels(periods);
             const datasets = [];
 
             // Add main city data
             selectedCities.forEach((city, i) => {
                 const color = cityColors[i % cityColors.length];
-                const cityData = getMultiCityData(city, multiCityMetric);
+                // Align city data to union periods
+                const series = (fullCityTrends[city] || cityTrends[city] || []);
+                const map = Object.fromEntries(series.map(t => [t.period, t]));
+                const base = periods.map(p => {
+                    const t = map[p];
+                    if (!t) return null;
+                    if (multiCityMetric === 'inventory') return t.inventory;
+                    if (multiCityMetric === 'sales') return t.homes_sold;
+                    if (multiCityMetric === 'dom') return t.median_dom;
+                    if (multiCityMetric === 'price') return t.median_sale_price;
+                    return null;
+                });
 
                 datasets.push({
                     label: city,
-                    data: cityData,
+                    data: base,
                     borderColor: color,
                     backgroundColor: color + '20',
                     tension: 0.4,
@@ -1262,7 +1287,7 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
                 if (document.getElementById('multiCityMA3').checked) {
                     datasets.push({
                         label: city + ' (3-Mo MA)',
-                        data: calculateSMA(cityData, 3),
+                        data: calculateSMA(base, 3),
                         borderColor: color,
                         borderDash: [5, 5],
                         borderWidth: 1,
@@ -1273,7 +1298,7 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
                 if (document.getElementById('multiCityMA6').checked) {
                     datasets.push({
                         label: city + ' (6-Mo MA)',
-                        data: calculateSMA(cityData, 6),
+                        data: calculateSMA(base, 6),
                         borderColor: color,
                         borderDash: [8, 4],
                         borderWidth: 1,
@@ -1284,7 +1309,7 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
                 if (document.getElementById('multiCityMA12').checked) {
                     datasets.push({
                         label: city + ' (12-Mo MA)',
-                        data: calculateSMA(cityData, 12),
+                        data: calculateSMA(base, 12),
                         borderColor: color,
                         borderDash: [10, 3],
                         borderWidth: 1,
@@ -1295,7 +1320,7 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
                 if (document.getElementById('multiCityTrend').checked) {
                     datasets.push({
                         label: city + ' (Trend)',
-                        data: calculateTrendLine(cityData),
+                        data: calculateTrendLine(base),
                         borderColor: color,
                         borderDash: [2, 2],
                         borderWidth: 1,
