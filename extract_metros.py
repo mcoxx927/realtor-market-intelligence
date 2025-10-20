@@ -39,12 +39,14 @@ def extract_metro(source_file: str, metro_code: str, output_file: str, property_
         with gzip.open(source_file, 'rt', encoding='utf-8') as f:
             # Read in chunks
             for chunk_num, chunk in enumerate(pd.read_csv(f, sep='\t', chunksize=chunk_size, low_memory=False)):
+                # Normalize headers (strip quotes/whitespace) while preserving case expected downstream
+                chunk.columns = [col.strip().strip('"') for col in chunk.columns]
                 total_rows += len(chunk)
 
                 # Filter by metro code and property type
                 filtered = chunk[
-                    (chunk['parent_metro_region_metro_code'].astype(str) == str(metro_code)) &
-                    (chunk['property_type'] == property_type)
+                    (chunk['PARENT_METRO_REGION_METRO_CODE'].astype(str) == str(metro_code)) &
+                    (chunk['PROPERTY_TYPE'] == property_type)
                 ]
 
                 if len(filtered) > 0:
@@ -63,14 +65,14 @@ def extract_metro(source_file: str, metro_code: str, output_file: str, property_
         result_df = pd.concat(filtered_chunks, ignore_index=True)
 
         # Sort by period (most recent first)
-        result_df = result_df.sort_values('period', ascending=False)
+        result_df = result_df.sort_values('PERIOD_BEGIN', ascending=False)
 
         # Write to output file
         result_df.to_csv(output_file, sep='\t', index=False)
 
         # Summary statistics
-        unique_cities = result_df['region'].nunique()
-        date_range = f"{result_df['period'].min()} to {result_df['period'].max()}"
+        unique_cities = result_df['REGION'].nunique()
+        date_range = f"{result_df['PERIOD_BEGIN'].min()} to {result_df['PERIOD_BEGIN'].max()}"
 
         print(f"  [OK] Extraction complete:")
         print(f"       Total rows: {len(result_df):,}")

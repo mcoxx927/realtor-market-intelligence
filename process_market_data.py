@@ -69,6 +69,44 @@ def calculate_health_score(row):
 
     return min(score, 100)
 
+def pct_change(curr, prev):
+    """Safe percent change (curr/prev - 1). Returns None when not computable."""
+    try:
+        if prev in (None, 0) or curr is None:
+            return None
+        return (float(curr) / float(prev)) - 1.0
+    except Exception:
+        return None
+
+
+def add_series_derived(trend_rows, fields_for_change):
+    """Augment a list of monthly dicts with derived metrics and MoM/YoY deltas.
+
+    - Adds: months_of_supply, absorption_rate, supply_demand_ratio
+    - For each field in fields_for_change, adds <field>_mom and <field>_yoy as pct deltas
+    """
+    # Pre-index by period order as provided (assumed sorted ascending)
+    for i, row in enumerate(trend_rows):
+        inv = row.get('inventory')
+        sold = row.get('homes_sold')
+        newl = row.get('new_listings')
+        mos = (float(inv) / float(sold)) if inv not in (None, 0) and sold not in (None, 0) else None
+        arb = (float(sold) / float(inv)) if inv not in (None, 0) and sold not in (None, 0) else None
+        sdr = (float(newl) / float(sold)) if sold not in (None, 0) and newl is not None else None
+        row['months_of_supply'] = round(mos, 4) if mos is not None else None
+        row['absorption_rate'] = round(arb, 4) if arb is not None else None
+        row['supply_demand_ratio'] = round(sdr, 4) if sdr is not None else None
+
+        prev = trend_rows[i-1] if i-1 >= 0 else None
+        prev12 = trend_rows[i-12] if i-12 >= 0 else None
+        for field in fields_for_change:
+            curr_val = row.get(field)
+            prev_val = prev.get(field) if prev else None
+            prev12_val = prev12.get(field) if prev12 else None
+            row[f'{field}_mom'] = pct_change(curr_val, prev_val)
+            row[f'{field}_yoy'] = pct_change(curr_val, prev12_val)
+
+
 def process_metro_data(tsv_file: str, metro_name: str, lookback_months: int = 12) -> dict:
     """Process TSV file and extract metro-level + city-level historical trends"""
 
@@ -134,10 +172,18 @@ def process_metro_data(tsv_file: str, metro_name: str, lookback_months: int = 12
 
     # ========== METRO-LEVEL TRENDS (12 months for default view) ==========
     metro_trends_12m = calculate_metro_trends(df_recent_12m)
+    add_series_derived(metro_trends_12m, [
+        'inventory', 'new_listings', 'pending_sales', 'homes_sold',
+        'price_drops', 'median_sale_price', 'median_dom', 'pending_ratio'
+    ])
     print(f"  Metro trends (12m): {len(metro_trends_12m)} months")
 
     # ========== METRO-LEVEL TRENDS (FULL HISTORY) ==========
     full_metro_trends = calculate_metro_trends(df)
+    add_series_derived(full_metro_trends, [
+        'inventory', 'new_listings', 'pending_sales', 'homes_sold',
+        'price_drops', 'median_sale_price', 'median_dom', 'pending_ratio'
+    ])
     print(f"  Metro trends (full): {len(full_metro_trends)} months")
 
     # ========== TOP 10 CITIES (Current Month) ==========
@@ -202,6 +248,11 @@ def process_metro_data(tsv_file: str, metro_name: str, lookback_months: int = 12
                     'pending_ratio': safe_float(pending_val / inventory_val) if (pending_val and inventory_val and inventory_val > 0) else None
                 })
 
+            # Add derived fields per city series
+            add_series_derived(city_history, [
+                'inventory', 'new_listings', 'pending_sales', 'homes_sold',
+                'price_drops', 'median_sale_price', 'median_dom', 'pending_ratio'
+            ])
             trends[city_name] = city_history
         return trends
 
@@ -214,6 +265,14 @@ def process_metro_data(tsv_file: str, metro_name: str, lookback_months: int = 12
     all_cities = sorted(df['CITY'].unique())
     full_city_trends = calculate_city_trends(df, all_cities)
     print(f"  All cities (full): {len(all_cities)} cities, {len(full_metro_trends)} months each")
+
+    # ========== PERIOD INDICES ==========
+    all_periods_sorted = sorted({d.strftime('%Y-%m') for d in df['PERIOD_BEGIN'].unique()})
+    periods_12m_sorted = sorted({d.strftime('%Y-%m') for d in df_recent_12m['PERIOD_BEGIN'].unique()})
+    period_index_by_city = {}
+    for c in all_cities:
+        city_periods = sorted({d.strftime('%Y-%m') for d in df[df['CITY'] == c]['PERIOD_BEGIN'].unique()})
+        period_index_by_city[c] = city_periods
 
     # ========== CURRENT MONTH METRO STATS ==========
     current_metro_stats = {
@@ -231,7 +290,10 @@ def process_metro_data(tsv_file: str, metro_name: str, lookback_months: int = 12
         'city_trends': city_trends_12m,  # Top 5 cities, 12 months
         'full_metro_trends': full_metro_trends,  # All available history
         'full_city_trends': full_city_trends,  # All cities, all history
-        'available_cities': all_cities  # List of all city names
+        'available_cities': all_cities,  # List of all city names
+        'period_index_full': all_periods_sorted,
+        'period_index_12m': periods_12m_sorted,
+        'period_index_by_city': period_index_by_city
     }
 
 def main():

@@ -22,6 +22,9 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
     full_metro_trends = data['full_metro_trends']  # ALL historical data
     full_city_trends = data['full_city_trends']  # ALL cities, ALL history
     available_cities = data['available_cities']  # List of all city names
+    period_index_full = data.get('period_index_full', [t['period'] for t in full_metro_trends])
+    period_index_12m = data.get('period_index_12m', [t['period'] for t in metro_trends])
+    period_index_by_city = data.get('period_index_by_city', {})
 
     # Current month stats
     current = metro_trends[-1]
@@ -42,6 +45,7 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
     dom_data = [t['median_dom'] for t in metro_trends]
     pending_ratio_data = [t['pending_ratio'] if t['pending_ratio'] else 0 for t in metro_trends]
     homes_sold_data = [t['homes_sold'] for t in metro_trends]
+    median_price_data = [t['median_sale_price'] for t in metro_trends]
 
     # Calculate flipper metrics (current month)
     months_supply = round(current['inventory'] / current['homes_sold'], 1) if current['homes_sold'] > 0 else 0
@@ -95,11 +99,18 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
             if len(hold_cities) < 3:
                 hold_cities.append(city)
 
-    # City selector options (top 5)
-    city_names = list(city_trends.keys())
+    # City selector options (all available cities sorted by latest sales)
+    def latest_sales(city_name: str) -> int:
+        series = full_city_trends.get(city_name) or city_trends.get(city_name) or []
+        if not series:
+            return 0
+        return series[-1].get('homes_sold') or 0
+
+    city_names = sorted(available_cities, key=latest_sales, reverse=True)
 
     # Build city dropdown options
     city_options = '\n'.join([f'<option value="{city}">{city}</option>' for city in city_names])
+    city_names_json = json.dumps(city_names)
 
     # Pre-build buy/sell/hold city lists HTML
     buy_cities_html = '\n'.join([f'                        <div>• {city["name"]} - {city["months_supply"]}mo, DOM {city["dom"]}</div>' for city in buy_cities[:3]])
@@ -108,6 +119,7 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
 
     # Prepare JSON data for JavaScript (12-month default view only)
     labels_json = json.dumps(labels_formatted)
+    periods_json = json.dumps(labels)
     inventory_json = json.dumps(inventory_data)
     new_listings_json = json.dumps(new_listings_data)
     pending_json = json.dumps(pending_data)
@@ -115,11 +127,36 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
     dom_json = json.dumps(dom_data)
     pending_ratio_json = json.dumps(pending_ratio_data)
     homes_sold_json = json.dumps(homes_sold_data)
+    median_price_json = json.dumps(median_price_data)
     city_trends_json = json.dumps(city_trends)
-
-    # For large data, reference the JSON file path instead of embedding
-    data_file_name = Path(data_file).name
+    full_metro_trends_json = json.dumps(full_metro_trends)
+    full_city_trends_json = json.dumps(full_city_trends)
     available_cities_json = json.dumps(available_cities)
+    period_json = json.dumps(period)
+    period_index_full_json = json.dumps(period_index_full)
+    period_index_12m_json = json.dumps(period_index_12m)
+    period_index_by_city_json = json.dumps(period_index_by_city)
+
+    # Derived metric arrays for tooltips and fallbacks
+    inventory_mom_json = json.dumps([t.get('inventory_mom') for t in metro_trends])
+    inventory_yoy_json = json.dumps([t.get('inventory_yoy') for t in metro_trends])
+    new_listings_mom_json = json.dumps([t.get('new_listings_mom') for t in metro_trends])
+    new_listings_yoy_json = json.dumps([t.get('new_listings_yoy') for t in metro_trends])
+    pending_sales_mom_json = json.dumps([t.get('pending_sales_mom') for t in metro_trends])
+    pending_sales_yoy_json = json.dumps([t.get('pending_sales_yoy') for t in metro_trends])
+    homes_sold_mom_json = json.dumps([t.get('homes_sold_mom') for t in metro_trends])
+    homes_sold_yoy_json = json.dumps([t.get('homes_sold_yoy') for t in metro_trends])
+    price_drops_mom_json = json.dumps([t.get('price_drops_mom') for t in metro_trends])
+    price_drops_yoy_json = json.dumps([t.get('price_drops_yoy') for t in metro_trends])
+    dom_mom_json = json.dumps([t.get('median_dom_mom') for t in metro_trends])
+    dom_yoy_json = json.dumps([t.get('median_dom_yoy') for t in metro_trends])
+    price_mom_json = json.dumps([t.get('median_sale_price_mom') for t in metro_trends])
+    price_yoy_json = json.dumps([t.get('median_sale_price_yoy') for t in metro_trends])
+    pending_ratio_mom_json = json.dumps([t.get('pending_ratio_mom') for t in metro_trends])
+    pending_ratio_yoy_json = json.dumps([t.get('pending_ratio_yoy') for t in metro_trends])
+    months_supply_series_json = json.dumps([t.get('months_of_supply') for t in metro_trends])
+    absorption_rate_json = json.dumps([t.get('absorption_rate') for t in metro_trends])
+    supply_demand_series_json = json.dumps([t.get('supply_demand_ratio') for t in metro_trends])
 
     # Pre-build YoY change strings
     inventory_yoy_str = f"up {inventory_yoy}%" if inventory_yoy > 0 else f"down {abs(inventory_yoy)}%"
@@ -168,6 +205,11 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
         .selector:hover {{
             background: rgba(255, 255, 255, 0.15);
         }}
+        /* Ensure select dropdown options remain readable across platforms */
+        select.selector option {{
+            color: #111827; /* tailwind gray-900 */
+            background-color: #ffffff;
+        }}
     </style>
 </head>
 <body class="min-h-screen p-6">
@@ -186,13 +228,14 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
                     <h3 class="text-lg font-bold mb-1">Date Range</h3>
                     <p class="text-sm text-gray-400" id="dateRangeDisplay">Last 12 Months (Default)</p>
                 </div>
-                <div class="flex flex-wrap gap-2">
-                    <button onclick="setDateRange('6m', this)" class="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm font-medium">Last 6 Months</button>
-                    <button onclick="setDateRange('12m', this)" class="px-4 py-2 bg-blue-500/40 border-2 border-blue-500 rounded-lg text-sm font-bold">Last 12 Months</button>
-                    <button onclick="setDateRange('ytd', this)" class="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm font-medium">YTD 2025</button>
-                    <button onclick="setDateRange('2y', this)" class="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm font-medium">Last 2 Years</button>
-                    <button onclick="setDateRange('5y', this)" class="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm font-medium">Last 5 Years</button>
-                    <button onclick="setDateRange('all', this)" class="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm font-medium">All Time</button>
+                <div class="flex flex-wrap gap-2 items-center">
+                    <button data-range="6m" onclick="setDateRange('6m', this)" class="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm font-medium">Last 6 Months</button>
+                    <button data-range="12m" onclick="setDateRange('12m', this)" class="px-4 py-2 bg-blue-500/40 border-2 border-blue-500 rounded-lg text-sm font-bold">Last 12 Months</button>
+                    <button data-range="ytd" onclick="setDateRange('ytd', this)" class="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm font-medium">YTD 2025</button>
+                    <button data-range="2y" onclick="setDateRange('2y', this)" class="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm font-medium">Last 2 Years</button>
+                    <button data-range="5y" onclick="setDateRange('5y', this)" class="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm font-medium">Last 5 Years</button>
+                    <button data-range="all" onclick="setDateRange('all', this)" class="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm font-medium">All Time</button>
+                    <button id="btnResetState" class="ml-2 px-3 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-xs" aria-label="Reset dashboard selections">Reset</button>
                 </div>
             </div>
         </div>
@@ -286,10 +329,10 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
                             <option value="pending">Pending Sales Only</option>
                         </select>
                         <button onclick="downloadChartImage('inventoryChart', 'inventory_dynamics')" class="px-3 py-2 bg-green-500/20 hover:bg-green-500/40 border border-green-500/50 rounded-lg transition text-sm">
-                            <span>📊 PNG</span>
+                            <span>Download PNG</span>
                         </button>
                         <button onclick="exportChartCSV('inventoryChart', 'inventory_dynamics')" class="px-3 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm">
-                            <span>📄 CSV</span>
+                            <span>Download CSV</span>
                         </button>
                     </div>
                 </div>
@@ -347,20 +390,57 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
             </div>
         </div>
 
-        <!-- Top 5 Cities Comparison (Single City View) -->
+        <!-- City Historical Trends -->
         <div class="card p-6 text-white">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-2xl font-bold">Top 5 Cities Historical Trends</h2>
-                <div class="flex gap-2">
-                    <select id="citySelector" class="selector">
-                        {city_options}
-                    </select>
-                    <select id="cityMetric" class="selector">
-                        <option value="inventory">Inventory</option>
-                        <option value="sales">Homes Sold</option>
-                        <option value="dom">Days on Market</option>
-                        <option value="price">Median Price</option>
-                    </select>
+            <div class="flex flex-col gap-4 mb-4">
+                <div class="flex flex-wrap gap-3 items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold">City Historical Trends</h2>
+                        <p class="text-sm text-gray-400">Ordered by latest monthly sales. Compare inventory, listings, and absorption signals.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2 items-center">
+                        <label class="text-sm" for="citySelector">City</label>
+                        <select id="citySelector" class="selector" aria-label="Select city">
+                            {city_options}
+                        </select>
+                        <label class="text-sm" for="cityMetricMode">Metric</label>
+                        <select id="cityMetricMode" class="selector" aria-label="Select city metric view">
+                            <option value="all">All Metrics</option>
+                            <option value="inventory">Inventory</option>
+                            <option value="new_listings">New Listings</option>
+                            <option value="pending_sales">Pending Sales</option>
+                            <option value="homes_sold">Homes Sold</option>
+                            <option value="median_sale_price">Median Price</option>
+                            <option value="median_dom">Days on Market</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-4 text-sm" id="cityChartToggles">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="cityShowMA3" class="w-4 h-4 cursor-pointer">
+                        <span>3-Month MA</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="cityShowMA6" class="w-4 h-4 cursor-pointer">
+                        <span>6-Month MA</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="cityShowMA12" class="w-4 h-4 cursor-pointer">
+                        <span>12-Month MA</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="cityShowTrend" class="w-4 h-4 cursor-pointer">
+                        <span>Trend Line</span>
+                    </label>
+                </div>
+                <div class="flex flex-wrap gap-2 text-xs">
+                    <span class="text-gray-400 uppercase tracking-wide">Range:</span>
+                    <div class="flex gap-2">
+                        <button data-city-range="12m" class="city-range-button px-3 py-1 bg-white/10 border border-white/20 rounded">12m</button>
+                        <button data-city-range="24m" class="city-range-button px-3 py-1 bg-white/10 border border-white/20 rounded">24m</button>
+                        <button data-city-range="60m" class="city-range-button px-3 py-1 bg-white/10 border border-white/20 rounded">5y</button>
+                        <button data-city-range="all" class="city-range-button px-3 py-1 bg-white/10 border border-white/20 rounded">All</button>
+                    </div>
                 </div>
             </div>
             <div class="chart-container">
@@ -377,10 +457,10 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
                 </div>
                 <div class="flex gap-2">
                     <button onclick="downloadChartImage('multiCityChart', 'multi_city_comparison')" class="px-3 py-2 bg-green-500/20 hover:bg-green-500/40 border border-green-500/50 rounded-lg transition text-sm">
-                        <span>📊 PNG</span>
+                        <span>Download PNG</span>
                     </button>
                     <button onclick="exportChartCSV('multiCityChart', 'multi_city_comparison')" class="px-3 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm">
-                        <span>📄 CSV</span>
+                        <span>Download CSV</span>
                     </button>
                 </div>
             </div>
@@ -388,8 +468,13 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
                 <div>
                     <label class="block text-sm font-medium mb-2">Search & Select Cities</label>
                     <input type="text" id="citySearch" placeholder="Search cities..." class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 mb-2">
-                    <div class="bg-white/5 border border-white/20 rounded-lg max-h-48 overflow-y-auto p-2" id="cityCheckboxList">
+                    <div class="bg-white/5 border border-white/20 rounded-lg max-h-48 overflow-y-auto p-2" id="cityCheckboxList" role="listbox" aria-label="Select cities for comparison">
                         <!-- Checkboxes will be generated by JavaScript -->
+                    </div>
+                    <div class="flex flex-wrap gap-2 mt-2">
+                        <button id="btnTopSales" class="px-3 py-2 bg-white/10 border border-white/20 rounded text-sm hover:bg-white/20" aria-label="Select top five cities by sales volume">Select Top 5 by Sales</button>
+                        <button id="btnTopSupply" class="px-3 py-2 bg-white/10 border border-white/20 rounded text-sm hover:bg-white/20" aria-label="Select top five cities by months of supply">Select Top 5 by MoS</button>
+                        <button id="btnClearSel" class="px-3 py-2 bg-white/10 border border-white/20 rounded text-sm hover:bg-white/20" aria-label="Clear selected cities">Clear</button>
                     </div>
                 </div>
                 <div>
@@ -424,6 +509,10 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
                 <label class="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" id="multiCityTrend" class="w-4 h-4 cursor-pointer" onchange="updateMultiCityChart()">
                     <span>Trend Lines</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="multiCityMetro" class="w-4 h-4 cursor-pointer">
+                    <span>Metro Benchmark</span>
                 </label>
             </div>
             <div class="chart-container" style="height: 400px;">
@@ -579,6 +668,11 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
         Chart.defaults.color = '#9ca3af';
         Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
 
+        const numberFormatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
+        const decimalFormatter = new Intl.NumberFormat('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+        const percentFormatter = new Intl.NumberFormat('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+        const currencyFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+
         const chartOptions = {
             responsive: true,
             maintainAspectRatio: false,
@@ -587,7 +681,10 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
                 tooltip: {
                     backgroundColor: 'rgba(15, 52, 96, 0.95)',
                     titleColor: '#fff',
-                    bodyColor: '#e5e7eb'
+                    bodyColor: '#e5e7eb',
+                    callbacks: {
+                        label: buildTooltipLabel
+                    }
                 }
             },
             scales: {
@@ -602,8 +699,14 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
             }
         };
 
+        const rangeButtonDefaultClass = 'px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm font-medium';
+        const rangeButtonActiveClass = 'px-4 py-2 bg-blue-500/40 border-2 border-blue-500 rounded-lg text-sm font-bold';
+        const cityRangeDefaultClass = 'city-range-button px-3 py-1 bg-white/10 border border-white/20 rounded';
+        const cityRangeActiveClass = 'city-range-button px-3 py-1 bg-blue-500/40 border border-blue-500 text-white font-semibold rounded';
+
         // Data (12-month embedded for fast initial load)
-        const labels = ''' + labels_json + ''';
+        let defaultPeriods = ''' + periods_json + ''';
+        let labels = ''' + labels_json + ''';
         const inventoryData = ''' + inventory_json + ''';
         const newListingsData = ''' + new_listings_json + ''';
         const pendingData = ''' + pending_json + ''';
@@ -611,34 +714,59 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
         const domData = ''' + dom_json + ''';
         const pendingRatioData = ''' + pending_ratio_json + ''';
         const homesSoldData = ''' + homes_sold_json + ''';
+        const medianPriceData = ''' + median_price_json + ''';
+        const currentPeriod = ''' + period_json + ''';
+
+        const periodIndexFull = ''' + period_index_full_json + ''';
+        const periodIndex12 = ''' + period_index_12m_json + ''';
+        const periodIndexByCity = ''' + period_index_by_city_json + ''';
+
+        const inventoryMomData = ''' + inventory_mom_json + ''';
+        const inventoryYoyData = ''' + inventory_yoy_json + ''';
+        const newListingsMomData = ''' + new_listings_mom_json + ''';
+        const newListingsYoyData = ''' + new_listings_yoy_json + ''';
+        const pendingSalesMomData = ''' + pending_sales_mom_json + ''';
+        const pendingSalesYoyData = ''' + pending_sales_yoy_json + ''';
+        const homesSoldMomData = ''' + homes_sold_mom_json + ''';
+        const homesSoldYoyData = ''' + homes_sold_yoy_json + ''';
+        const priceDropsMomData = ''' + price_drops_mom_json + ''';
+        const priceDropsYoyData = ''' + price_drops_yoy_json + ''';
+        const domMomData = ''' + dom_mom_json + ''';
+        const domYoyData = ''' + dom_yoy_json + ''';
+        const priceMomData = ''' + price_mom_json + ''';
+        const priceYoyData = ''' + price_yoy_json + ''';
+        const pendingRatioMomData = ''' + pending_ratio_mom_json + ''';
+        const pendingRatioYoyData = ''' + pending_ratio_yoy_json + ''';
+        const monthsSupplySeries = ''' + months_supply_series_json + ''';
+        const absorptionRateSeries = ''' + absorption_rate_json + ''';
+        const supplyDemandSeries = ''' + supply_demand_series_json + ''';
 
         // City trends data (12-month default, top 5 cities)
         const cityTrends = ''' + city_trends_json + ''';
-
-        // Load full historical data from JSON file (async, for date range selector)
-        let fullMetroTrends = [];
-        let fullCityTrends = {};
+        const fullMetroTrends = ''' + full_metro_trends_json + ''';
+        const fullCityTrends = ''' + full_city_trends_json + ''';
         const availableCities = ''' + available_cities_json + ''';
+        const orderedCityNames = ''' + city_names_json + ''';
+
+        const urlState = new URLSearchParams(window.location.hash ? window.location.hash.substring(1) : '');
+        const getStoredValue = key => { try { return localStorage.getItem(key); } catch (e) { return null; } };
+        const setStoredValue = (key, value) => { try { localStorage.setItem(key, value); } catch (e) {} };
+        const removeStoredValue = key => { try { localStorage.removeItem(key); } catch (e) {} };
+        const parseStoredArray = value => { try { return JSON.parse(value || '[]'); } catch (e) { return []; } };
+
+        const initialRangeFromUrl = urlState.get('range');
+        const initialCityFromUrl = urlState.get('city');
+        const initialMetricFromUrl = urlState.get('metric');
+        const initialMultiMetricFromUrl = urlState.get('multiMetric');
+        const initialMultiCitiesFromUrl = (urlState.get('multiCities') || '').split(',').filter(Boolean);
+        const initialMetroOverlayFromUrl = urlState.get('metroOverlay') === '1';
+        const hasMetroOverlayParam = urlState.has('metroOverlay');
+
+        let initialRange = initialRangeFromUrl || getStoredValue('date_range') || '12m';
 
         // Current date range state
-        let currentRange = '12m';
+        let currentRange = initialRange;
         let filteredMetroData = null;
-        let dataLoaded = false;
-
-        // Load full data from JSON file
-        fetch(''' + json.dumps(data_file_name) + ''')
-            .then(response => response.json())
-            .then(data => {{
-                fullMetroTrends = data.full_metro_trends || [];
-                fullCityTrends = data.full_city_trends || {};
-                dataLoaded = true;
-                console.log('Full historical data loaded:', fullMetroTrends.length, 'months');
-            }})
-            .catch(error => {{
-                console.error('Error loading full data:', error);
-                // Fallback to 12-month data only
-                dataLoaded = true;
-            }});
 
         // Format period labels helper
         function formatLabels(periods) {
@@ -649,83 +777,156 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
             });
         }
 
+        if (Array.isArray(periodIndex12) && periodIndex12.length) {
+            defaultPeriods = periodIndex12.slice();
+            labels = formatLabels(defaultPeriods);
+        } else if (!Array.isArray(labels) || labels.length === 0) {
+            labels = formatLabels(defaultPeriods);
+        }
+
+        function getEmbeddedMetroData() {
+            return {
+                data: null,
+                label: 'Last 12 Months (Default)',
+                periods: defaultPeriods.slice(),
+                labels: labels.slice(),
+                inventory: inventoryData.slice(),
+                new_listings: newListingsData.slice(),
+                pending_sales: pendingData.slice(),
+                homes_sold: homesSoldData.slice(),
+                price_drops: priceDropsData.slice(),
+                median_dom: domData.slice(),
+                median_sale_price: medianPriceData.slice(),
+                pending_ratio: pendingRatioData.slice(),
+                inventory_mom: inventoryMomData.slice(),
+                inventory_yoy: inventoryYoyData.slice(),
+                new_listings_mom: newListingsMomData.slice(),
+                new_listings_yoy: newListingsYoyData.slice(),
+                pending_sales_mom: pendingSalesMomData.slice(),
+                pending_sales_yoy: pendingSalesYoyData.slice(),
+                homes_sold_mom: homesSoldMomData.slice(),
+                homes_sold_yoy: homesSoldYoyData.slice(),
+                price_drops_mom: priceDropsMomData.slice(),
+                price_drops_yoy: priceDropsYoyData.slice(),
+                median_dom_mom: domMomData.slice(),
+                median_dom_yoy: domYoyData.slice(),
+                median_sale_price_mom: priceMomData.slice(),
+                median_sale_price_yoy: priceYoyData.slice(),
+                pending_ratio_mom: pendingRatioMomData.slice(),
+                pending_ratio_yoy: pendingRatioYoyData.slice(),
+                months_of_supply: monthsSupplySeries.slice(),
+                absorption_rate: absorptionRateSeries.slice(),
+                supply_demand_ratio: supplyDemandSeries.slice()
+            };
+        }
+
         // Filter metro data by date range
         function filterDataByRange(range) {
-            // If requesting 12-month data and fullMetroTrends not loaded yet, use embedded data
-            if (range === '12m' && fullMetroTrends.length === 0) {
-                return {{
-                    data: null,
-                    label: 'Last 12 Months (Default)',
-                    periods: labels.map((_, i) => {period}-{{'01': i}}), // placeholder
-                    labels: labels,
-                    inventory: inventoryData,
-                    new_listings: newListingsData,
-                    pending_sales: pendingData,
-                    homes_sold: homesSoldData,
-                    price_drops: priceDropsData,
-                    median_dom: domData,
-                    median_sale_price: labels.map(() => 0), // Not in default data
-                    pending_ratio: pendingRatioData
-                }};
-            }}
+            if (!Array.isArray(fullMetroTrends) || fullMetroTrends.length === 0) {
+                return getEmbeddedMetroData();
+            }
 
-            // For other ranges, wait for full data to load
-            if (fullMetroTrends.length === 0) {{
-                alert('Please wait for data to load...');
-                return filterDataByRange('12m'); // Fall back to 12-month
-            }}
-
-            const now = new Date('{period}-01');
+            const now = new Date(currentPeriod + '-01');
             let cutoffDate;
             let rangeLabel = '';
 
-            if (range === '6m') {{
+            if (range === '6m') {
                 cutoffDate = new Date(now.getFullYear(), now.getMonth() - 5, 1);
                 rangeLabel = 'Last 6 Months';
-            }} else if (range === '12m') {{
+            } else if (range === '12m') {
                 cutoffDate = new Date(now.getFullYear(), now.getMonth() - 11, 1);
                 rangeLabel = 'Last 12 Months (Default)';
-            }} else if (range === 'ytd') {{
+            } else if (range === 'ytd') {
                 cutoffDate = new Date(now.getFullYear(), 0, 1);
                 rangeLabel = 'YTD ' + now.getFullYear();
-            }} else if (range === '2y') {{
+            } else if (range === '2y') {
                 cutoffDate = new Date(now.getFullYear() - 2, now.getMonth(), 1);
                 rangeLabel = 'Last 2 Years';
-            }} else if (range === '5y') {{
+            } else if (range === '5y') {
                 cutoffDate = new Date(now.getFullYear() - 5, now.getMonth(), 1);
                 rangeLabel = 'Last 5 Years';
-            }} else if (range === 'all') {{
+            } else if (range === 'all') {
                 cutoffDate = new Date('2000-01-01');
                 rangeLabel = 'All Time (' + fullMetroTrends.length + ' months)';
-            }}
+            } else {
+                cutoffDate = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+                rangeLabel = 'Last 12 Months (Default)';
+            }
 
             const cutoffStr = cutoffDate.toISOString().slice(0, 7);
             const filtered = fullMetroTrends.filter(t => t.period >= cutoffStr);
+            const effective = filtered.length > 0 ? filtered : fullMetroTrends.slice(-12);
+            const labelText = filtered.length > 0 ? rangeLabel : 'Last 12 Months (Default)';
 
-            return {{
-                data: filtered,
-                label: rangeLabel,
-                periods: filtered.map(t => t.period),
-                labels: formatLabels(filtered.map(t => t.period)),
-                inventory: filtered.map(t => t.inventory),
-                new_listings: filtered.map(t => t.new_listings),
-                pending_sales: filtered.map(t => t.pending_sales),
-                homes_sold: filtered.map(t => t.homes_sold),
-                price_drops: filtered.map(t => t.price_drops),
-                median_dom: filtered.map(t => t.median_dom),
-                median_sale_price: filtered.map(t => t.median_sale_price),
-                pending_ratio: filtered.map(t => t.pending_ratio || 0)
-            }};
+            return {
+                data: effective,
+                label: labelText,
+                periods: effective.map(t => t.period),
+                labels: formatLabels(effective.map(t => t.period)),
+                inventory: effective.map(t => t.inventory),
+                new_listings: effective.map(t => t.new_listings),
+                pending_sales: effective.map(t => t.pending_sales),
+                homes_sold: effective.map(t => t.homes_sold),
+                price_drops: effective.map(t => t.price_drops),
+                median_dom: effective.map(t => t.median_dom),
+                median_sale_price: effective.map(t => t.median_sale_price),
+                pending_ratio: effective.map(t => (t.pending_ratio ?? null)),
+                inventory_mom: effective.map(t => t.inventory_mom ?? null),
+                inventory_yoy: effective.map(t => t.inventory_yoy ?? null),
+                new_listings_mom: effective.map(t => t.new_listings_mom ?? null),
+                new_listings_yoy: effective.map(t => t.new_listings_yoy ?? null),
+                pending_sales_mom: effective.map(t => t.pending_sales_mom ?? null),
+                pending_sales_yoy: effective.map(t => t.pending_sales_yoy ?? null),
+                homes_sold_mom: effective.map(t => t.homes_sold_mom ?? null),
+                homes_sold_yoy: effective.map(t => t.homes_sold_yoy ?? null),
+                price_drops_mom: effective.map(t => t.price_drops_mom ?? null),
+                price_drops_yoy: effective.map(t => t.price_drops_yoy ?? null),
+                median_dom_mom: effective.map(t => t.median_dom_mom ?? null),
+                median_dom_yoy: effective.map(t => t.median_dom_yoy ?? null),
+                median_sale_price_mom: effective.map(t => t.median_sale_price_mom ?? null),
+                median_sale_price_yoy: effective.map(t => t.median_sale_price_yoy ?? null),
+                pending_ratio_mom: effective.map(t => t.pending_ratio_mom ?? null),
+                pending_ratio_yoy: effective.map(t => t.pending_ratio_yoy ?? null),
+                months_of_supply: effective.map(t => t.months_of_supply ?? null),
+                absorption_rate: effective.map(t => t.absorption_rate ?? null),
+                supply_demand_ratio: effective.map(t => t.supply_demand_ratio ?? null)
+            };
         }
 
-        // Initialize with 12 month default
+        function syncUrlState() {
+            try {
+                const params = new URLSearchParams();
+                if (currentRange) params.set('range', currentRange);
+                if (currentCity) params.set('city', currentCity);
+                if (currentCityMetricMode && currentCityMetricMode !== 'all') params.set('metric', currentCityMetricMode);
+                if (currentCityRange && currentCityRange !== '24m') params.set('cityRange', currentCityRange);
+                if (selectedCities.length) params.set('multiCities', selectedCities.join(','));
+                if (multiCityMetric && multiCityMetric !== 'inventory') params.set('multiMetric', multiCityMetric);
+                const metroOverlayChecked = document.getElementById('multiCityMetro')?.checked;
+                if (metroOverlayChecked) params.set('metroOverlay', '1');
+                const hash = params.toString();
+                const base = window.location.pathname + window.location.search;
+                const newUrl = hash ? base + '#' + hash : base;
+                if (window.location.href !== newUrl) {
+                    window.history.replaceState(null, '', newUrl);
+                }
+            } catch (e) {
+                console.warn('Unable to sync URL state', e);
+            }
+        }
+
+        // Initialize with saved or default range
         try {
-            filteredMetroData = filterDataByRange('12m');
+            filteredMetroData = filterDataByRange(initialRange);
             console.log('Filtered data initialized:', filteredMetroData ? 'SUCCESS' : 'FAILED');
         } catch (e) {
             console.error('Error initializing filtered data:', e);
             alert('Error loading chart data: ' + e.message);
+            initialRange = '12m';
+            currentRange = '12m';
+            filteredMetroData = filterDataByRange('12m');
         }
+        currentRange = initialRange;
 
         // ============= MOVING AVERAGES & TREND LINES =============
 
@@ -766,6 +967,72 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
             return data.map((_, i) => slope * i + intercept);
         }
 
+        function formatMetricValue(metricKey, value) {
+            if (value === null || value === undefined || Number.isNaN(value)) return 'N/A';
+            const numericValue = Number(value);
+            if (Number.isNaN(numericValue)) return 'N/A';
+            if (!metricKey) {
+                return Number.isFinite(numericValue) ? decimalFormatter.format(numericValue) : String(value);
+            }
+
+            switch (metricKey) {
+                case 'inventory':
+                case 'new_listings':
+                case 'pending_sales':
+                case 'homes_sold':
+                case 'price_drops':
+                    return numberFormatter.format(numericValue);
+                case 'median_dom':
+                    return `${Math.round(numericValue)} days`;
+                case 'median_sale_price':
+                    return currencyFormatter.format(numericValue);
+                case 'pending_ratio':
+                case 'absorption_rate':
+                    return `${(numericValue * 100).toFixed(1)}%`;
+                case 'months_of_supply':
+                    return `${numericValue.toFixed(1)} mo`;
+                case 'supply_demand_ratio':
+                    return numericValue.toFixed(2);
+                default:
+                    return Number.isFinite(numericValue) ? decimalFormatter.format(numericValue) : String(value);
+            }
+        }
+
+        function formatDelta(delta, label) {
+            if (delta === null || delta === undefined || Number.isNaN(delta)) return null;
+            const numericDelta = Number(delta);
+            if (!Number.isFinite(numericDelta)) return null;
+            const pct = Math.abs(numericDelta) * 100;
+            const decimals = pct >= 10 ? 1 : 2;
+            const arrow = numericDelta > 0 ? '▲' : numericDelta < 0 ? '▼' : '●';
+            return `${arrow} ${pct.toFixed(decimals)}% ${label}`;
+        }
+
+        function buildTooltipLabel(context) {
+            const dataset = context.dataset || {};
+            const value = context.parsed?.y;
+            const metricKey = dataset.metaKey;
+            const labelValue = formatMetricValue(metricKey, value);
+            let output = `${dataset.label}: ${labelValue}`;
+
+            const source = typeof dataset.tooltipSource === 'function' ? dataset.tooltipSource() : filteredMetroData;
+            if (source && metricKey) {
+                const derived = derivedKeysForMetricKey(metricKey);
+                const momSeries = source[derived.mom];
+                const yoySeries = source[derived.yoy];
+                if (momSeries && momSeries.length > context.dataIndex) {
+                    const formatted = formatDelta(momSeries[context.dataIndex], 'MoM');
+                    if (formatted) output += '\\n  ' + formatted;
+                }
+                if (yoySeries && yoySeries.length > context.dataIndex) {
+                    const formatted = formatDelta(yoySeries[context.dataIndex], 'YoY');
+                    if (formatted) output += '\\n  ' + formatted;
+                }
+            }
+
+            return output;
+        }
+
         // Set date range and update all charts
         function setDateRange(range, clickedButton) {
             currentRange = range;
@@ -788,12 +1055,15 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
             updateDomPendingChart();
 
             // Update active button styling
-            document.querySelectorAll('button[onclick^="setDateRange"]').forEach(btn => {
-                btn.className = 'px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm font-medium';
+            document.querySelectorAll('[data-range]').forEach(btn => {
+                btn.className = rangeButtonDefaultClass;
             });
-            if (clickedButton) {
-                clickedButton.className = 'px-4 py-2 bg-blue-500/40 border-2 border-blue-500 rounded-lg text-sm font-bold';
+            const buttonToActivate = clickedButton || document.querySelector(`[data-range="${range}"]`);
+            if (buttonToActivate) {
+                buttonToActivate.className = rangeButtonActiveClass;
             }
+            setStoredValue('date_range', range);
+            syncUrlState();
         }
 
         // Inventory Chart (Dynamic)
@@ -813,19 +1083,25 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
                             borderColor: '#3b82f6',
                             backgroundColor: 'rgba(59, 130, 246, 0.1)',
                             fill: true,
-                            tension: 0.4
+                            tension: 0.4,
+                            metaKey: 'inventory',
+                            tooltipSource: () => filteredMetroData
                         },
                         {
                             label: 'New Listings',
                             data: filteredMetroData.new_listings,
                             borderColor: '#10b981',
-                            tension: 0.4
+                            tension: 0.4,
+                            metaKey: 'new_listings',
+                            tooltipSource: () => filteredMetroData
                         },
                         {
                             label: 'Pending Sales',
                             data: filteredMetroData.pending_sales,
                             borderColor: '#f59e0b',
-                            tension: 0.4
+                            tension: 0.4,
+                            metaKey: 'pending_sales',
+                            tooltipSource: () => filteredMetroData
                         }
                     ]
                 },
@@ -845,22 +1121,34 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
             let datasets = [];
             if (value === 'all') {
                 datasets = [
-                    { label: 'Active Listings', data: filteredMetroData.inventory, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, tension: 0.4, borderWidth: 2 },
-                    { label: 'New Listings', data: filteredMetroData.new_listings, borderColor: '#10b981', tension: 0.4, borderWidth: 2 },
-                    { label: 'Pending Sales', data: filteredMetroData.pending_sales, borderColor: '#f59e0b', tension: 0.4, borderWidth: 2 }
+                    { label: 'Active Listings', data: filteredMetroData.inventory, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, tension: 0.4, borderWidth: 2,
+                        metaKey: 'inventory', tooltipSource: () => filteredMetroData },
+                    { label: 'New Listings', data: filteredMetroData.new_listings, borderColor: '#10b981', tension: 0.4, borderWidth: 2,
+                        metaKey: 'new_listings', tooltipSource: () => filteredMetroData },
+                    { label: 'Pending Sales', data: filteredMetroData.pending_sales, borderColor: '#f59e0b', tension: 0.4, borderWidth: 2,
+                        metaKey: 'pending_sales', tooltipSource: () => filteredMetroData }
                 ];
             } else if (value === 'inventory') {
                 datasets = [
-                    { label: 'Active Listings', data: filteredMetroData.inventory, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, tension: 0.4, borderWidth: 2 }
+                    { label: 'Active Listings', data: filteredMetroData.inventory, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, tension: 0.4, borderWidth: 2,
+                        metaKey: 'inventory', tooltipSource: () => filteredMetroData }
                 ];
             } else if (value === 'new_listings') {
                 datasets = [
-                    { label: 'New Listings', data: filteredMetroData.new_listings, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.4, borderWidth: 2 }
+                    { label: 'New Listings', data: filteredMetroData.new_listings, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.4, borderWidth: 2,
+                        metaKey: 'new_listings', tooltipSource: () => filteredMetroData }
                 ];
             } else if (value === 'pending') {
                 datasets = [
-                    { label: 'Pending Sales', data: filteredMetroData.pending_sales, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: true, tension: 0.4, borderWidth: 2 }
+                    { label: 'Pending Sales', data: filteredMetroData.pending_sales, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: true, tension: 0.4, borderWidth: 2,
+                        metaKey: 'pending_sales', tooltipSource: () => filteredMetroData }
                 ];
+            }
+
+            if (!datasets.length) {
+                inventoryChart.data.datasets = [];
+                inventoryChart.update();
+                return;
             }
 
             // Add moving averages if enabled
@@ -930,7 +1218,9 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
                 datasets: [{
                     label: 'Price Reductions',
                     data: filteredMetroData.price_drops,
-                    backgroundColor: '#ef4444'
+                    backgroundColor: '#ef4444',
+                    metaKey: 'price_drops',
+                    tooltipSource: () => filteredMetroData
                 }]
             },
             options: chartOptions
@@ -955,7 +1245,9 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
                         borderColor: '#f59e0b',
                         backgroundColor: 'rgba(245, 158, 11, 0.1)',
                         fill: true,
-                        tension: 0.4
+                        tension: 0.4,
+                        metaKey: 'new_listings',
+                        tooltipSource: () => filteredMetroData
                     },
                     {
                         label: 'Homes Sold (Demand)',
@@ -963,7 +1255,9 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
                         borderColor: '#10b981',
                         backgroundColor: 'rgba(16, 185, 129, 0.1)',
                         fill: true,
-                        tension: 0.4
+                        tension: 0.4,
+                        metaKey: 'homes_sold',
+                        tooltipSource: () => filteredMetroData
                     }
                 ]
             },
@@ -991,14 +1285,18 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
                         backgroundColor: 'rgba(139, 92, 246, 0.1)',
                         fill: true,
                         tension: 0.4,
-                        yAxisID: 'y'
+                        yAxisID: 'y',
+                        metaKey: 'median_dom',
+                        tooltipSource: () => filteredMetroData
                     },
                     {
                         label: 'Pending Ratio',
                         data: filteredMetroData.pending_ratio,
                         borderColor: '#f59e0b',
                         tension: 0.4,
-                        yAxisID: 'y1'
+                        yAxisID: 'y1',
+                        metaKey: 'pending_ratio',
+                        tooltipSource: () => filteredMetroData
                     }
                 ]
             },
@@ -1035,86 +1333,326 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
             domPendingChart.update();
         }
 
-        // City Chart (Dynamic) - Show ONE metric at a time
-        const firstCity = Object.keys(cityTrends)[0];
-        const cityLabels = cityTrends[firstCity].map(t => {
-            const [year, month] = t.period.split('-');
-            const monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-            return monthNames[parseInt(month)] + " '" + year.slice(2);
-        });
+        // City Chart (Dynamic)
+        const cityNames = orderedCityNames.slice();
+        const legacyMetricMap = { sales: 'homes_sold', dom: 'median_dom', price: 'median_sale_price' };
 
-        let currentCity = firstCity;
-        let currentMetric = 'inventory';
+        const storedCity = getStoredValue('cityChartCity');
+        let currentCity = cityNames.includes(initialCityFromUrl) ? initialCityFromUrl : (storedCity && cityNames.includes(storedCity) ? storedCity : cityNames[0]);
+
+        let storedCityMetric = getStoredValue('cityChartMetric');
+        if (storedCityMetric && legacyMetricMap[storedCityMetric]) storedCityMetric = legacyMetricMap[storedCityMetric];
+        const mappedMetricFromUrl = initialMetricFromUrl && legacyMetricMap[initialMetricFromUrl] ? legacyMetricMap[initialMetricFromUrl] : initialMetricFromUrl;
+
+        const cityMetricModes = ['all','inventory','new_listings','pending_sales','homes_sold','median_sale_price','median_dom'];
+        const storedCityRange = getStoredValue('city_range');
+        const cityRangeOptions = ['12m','24m','60m','all'];
+        const initialCityRangeFromUrl = urlState.get('cityRange');
+
+        let currentCityMetricMode = cityMetricModes.includes(mappedMetricFromUrl) ? mappedMetricFromUrl : (cityMetricModes.includes(storedCityMetric) ? storedCityMetric : 'all');
+        let currentCityRange = cityRangeOptions.includes(initialCityRangeFromUrl) ? initialCityRangeFromUrl : (cityRangeOptions.includes(storedCityRange) ? storedCityRange : '24m');
+
+        function getCitySeries(city) {
+            return fullCityTrends[city] || cityTrends[city] || [];
+        }
+
+        function getCityPeriods(city, range = currentCityRange) {
+            const series = getCitySeries(city);
+            const base = periodIndexByCity[city] || series.map(t => t.period);
+            if (!base.length || !series.length) return series.map(t => t.period);
+            const total = Math.min(base.length, series.length);
+            let take = total;
+            if (range === '12m') take = Math.min(12, total);
+            else if (range === '24m') take = Math.min(24, total);
+            else if (range === '60m') take = Math.min(60, total);
+            // 'all' retains full length
+            const startIndex = total - take;
+            return base.slice(startIndex, startIndex + take);
+        }
+
+        let cityPeriods = getCityPeriods(currentCity, currentCityRange);
+        let cityLabels = formatLabels(cityPeriods);
+
+        function resolveMetricKey(metric) {
+            if (metric === 'inventory') return 'inventory';
+            if (metric === 'new_listings') return 'new_listings';
+            if (metric === 'pending_sales' || metric === 'pending') return 'pending_sales';
+            if (metric === 'homes_sold' || metric === 'sales') return 'homes_sold';
+            if (metric === 'median_dom' || metric === 'dom') return 'median_dom';
+            if (metric === 'median_sale_price' || metric === 'price') return 'median_sale_price';
+            return metric;
+        }
+
+        function derivedKeysForMetricKey(metricKey) {
+            return {
+                mom: metricKey + '_mom',
+                yoy: metricKey + '_yoy'
+            };
+        }
 
         function getCityData(city, metric) {
-            if (metric === 'inventory') {
-                return cityTrends[city].map(t => t.inventory);
-            } else if (metric === 'sales') {
-                return cityTrends[city].map(t => t.homes_sold);
-            } else if (metric === 'dom') {
-                return cityTrends[city].map(t => t.median_dom);
-            } else if (metric === 'price') {
-                return cityTrends[city].map(t => t.median_sale_price);
-            }
+            const key = resolveMetricKey(metric);
+            const series = getCitySeries(city);
+            return series.map(t => t[key] ?? null);
         }
 
         function getMetricLabel(metric) {
-            if (metric === 'inventory') return 'Inventory';
-            if (metric === 'sales') return 'Homes Sold';
-            if (metric === 'dom') return 'Days on Market';
-            if (metric === 'price') return 'Median Sale Price';
+            switch (metric) {
+                case 'inventory':
+                    return 'Inventory';
+                case 'new_listings':
+                    return 'New Listings';
+                case 'pending_sales':
+                case 'pending':
+                    return 'Pending Sales';
+                case 'homes_sold':
+                case 'sales':
+                    return 'Homes Sold';
+                case 'median_dom':
+                case 'dom':
+                    return 'Days on Market';
+                case 'median_sale_price':
+                case 'price':
+                    return 'Median Sale Price';
+                default:
+                    return metric;
+            }
         }
 
         function getMetricColor(metric) {
-            if (metric === 'inventory') return '#3b82f6';
-            if (metric === 'sales') return '#10b981';
-            if (metric === 'dom') return '#8b5cf6';
-            if (metric === 'price') return '#f59e0b';
+            switch (metric) {
+                case 'inventory':
+                    return '#3b82f6';
+                case 'new_listings':
+                    return '#10b981';
+                case 'pending_sales':
+                case 'pending':
+                    return '#f59e0b';
+                case 'homes_sold':
+                case 'sales':
+                    return '#ef4444';
+                case 'median_dom':
+                case 'dom':
+                    return '#8b5cf6';
+                case 'median_sale_price':
+                case 'price':
+                    return '#f97316';
+                default:
+                    return '#3b82f6';
+            }
+        }
+
+        function getCityTooltipSource(city) {
+            const series = getCitySeries(city);
+            const base = ['inventory', 'new_listings', 'pending_sales', 'homes_sold', 'median_dom', 'median_sale_price'];
+            const result = {};
+            base.forEach(key => {
+                result[key] = series.map(t => t[key] ?? null);
+                const derived = derivedKeysForMetricKey(key);
+                result[derived.mom] = series.map(t => t[derived.mom] ?? null);
+                result[derived.yoy] = series.map(t => t[derived.yoy] ?? null);
+            });
+            return result;
+        }
+
+        function buildCityDatasets() {
+            const series = getCitySeries(currentCity);
+            const periods = getCityPeriods(currentCity, currentCityRange);
+            const take = Math.min(periods.length, series.length);
+            const startIndex = Math.max(0, series.length - take);
+            const tooltipSource = getCityTooltipSource(currentCity);
+            const metricKey = resolveMetricKey(currentCityMetricMode);
+
+            if (currentCityMetricMode === 'all') {
+                const configs = [
+                    { key: 'inventory' },
+                    { key: 'new_listings' },
+                    { key: 'pending_sales' },
+                    { key: 'homes_sold' }
+                ];
+                return configs.map(cfg => ({
+                    label: getMetricLabel(cfg.key),
+                    data: series.slice(startIndex).map(t => t[cfg.key] ?? null),
+                    borderColor: getMetricColor(cfg.key),
+                    backgroundColor: getMetricColor(cfg.key) + '20',
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 2,
+                    metaKey: cfg.key,
+                    tooltipSource: () => tooltipSource
+                }));
+            }
+
+            const baseData = series.slice(startIndex).map(t => t[metricKey] ?? null);
+            const datasets = [{
+                label: getMetricLabel(metricKey),
+                data: baseData,
+                borderColor: getMetricColor(metricKey),
+                backgroundColor: getMetricColor(metricKey) + '20',
+                fill: true,
+                tension: 0.4,
+                borderWidth: 2,
+                metaKey: metricKey,
+                tooltipSource: () => tooltipSource
+            }];
+
+            const ma3 = document.getElementById('cityShowMA3');
+            const ma6 = document.getElementById('cityShowMA6');
+            const ma12 = document.getElementById('cityShowMA12');
+            const showTrend = document.getElementById('cityShowTrend');
+
+            if (ma3?.checked) {
+                datasets.push({
+                    label: getMetricLabel(metricKey) + ' (3-Mo MA)',
+                    data: calculateSMA(baseData, 3),
+                    borderColor: '#ec4899',
+                    borderDash: [5, 5],
+                    borderWidth: 2,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    metaKey: null
+                });
+            }
+            if (ma6?.checked) {
+                datasets.push({
+                    label: getMetricLabel(metricKey) + ' (6-Mo MA)',
+                    data: calculateSMA(baseData, 6),
+                    borderColor: '#a855f7',
+                    borderDash: [6, 4],
+                    borderWidth: 2,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    metaKey: null
+                });
+            }
+            if (ma12?.checked) {
+                datasets.push({
+                    label: getMetricLabel(metricKey) + ' (12-Mo MA)',
+                    data: calculateSMA(baseData, 12),
+                    borderColor: '#14b8a6',
+                    borderDash: [8, 4],
+                    borderWidth: 2,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    metaKey: null
+                });
+            }
+            if (showTrend?.checked) {
+                datasets.push({
+                    label: getMetricLabel(metricKey) + ' (Trend)',
+                    data: calculateTrendLine(baseData),
+                    borderColor: '#fbbf24',
+                    borderDash: [2, 2],
+                    borderWidth: 2,
+                    tension: 0,
+                    pointRadius: 0,
+                    metaKey: null
+                });
+            }
+
+            return datasets;
+        }
+
+        function getMultiCityTooltipSource(city) {
+            const series = (fullCityTrends[city] || cityTrends[city] || []);
+            const base = ['inventory', 'homes_sold', 'median_dom', 'median_sale_price'];
+            const result = {};
+            base.forEach(key => {
+                result[key] = series.map(t => t[key] ?? null);
+                const derived = derivedKeysForMetricKey(key);
+                result[derived.mom] = series.map(t => t[derived.mom] ?? null);
+                result[derived.yoy] = series.map(t => t[derived.yoy] ?? null);
+            });
+            return result;
+        }
+
+        function updateCityToggleState() {
+            const disable = currentCityMetricMode === 'all';
+            ['cityShowMA3','cityShowMA6','cityShowMA12','cityShowTrend'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.disabled = disable;
+                    if (disable) el.checked = false;
+                }
+            });
+        }
+
+        function updateCityChart() {
+            cityPeriods = getCityPeriods(currentCity, currentCityRange);
+            cityLabels = formatLabels(cityPeriods);
+            cityChart.data.labels = cityLabels;
+            cityChart.data.datasets = buildCityDatasets();
+            cityChart.update();
         }
 
         let cityChart = new Chart(document.getElementById('cityChart'), {
             type: 'line',
             data: {
                 labels: cityLabels,
-                datasets: [{
-                    label: getMetricLabel(currentMetric),
-                    data: getCityData(currentCity, currentMetric),
-                    borderColor: getMetricColor(currentMetric),
-                    backgroundColor: getMetricColor(currentMetric) + '20',
-                    fill: true,
-                    tension: 0.4
-                }]
+                datasets: buildCityDatasets()
             },
             options: chartOptions
         });
 
-        // Update city chart when city changes
+        const citySelectEl = document.getElementById('citySelector');
+        const metricSelectEl = document.getElementById('cityMetricMode');
+        if (citySelectEl && cityNames.includes(currentCity)) citySelectEl.value = currentCity;
+        if (metricSelectEl) metricSelectEl.value = currentCityMetricMode;
+        updateCityToggleState();
+
+        function setCityRange(range, clickedButton) {
+            if (!cityRangeOptions.includes(range)) range = '24m';
+            currentCityRange = range;
+            setStoredValue('city_range', currentCityRange);
+
+            document.querySelectorAll('.city-range-button').forEach(btn => btn.className = cityRangeDefaultClass);
+            const buttonToActivate = clickedButton || document.querySelector(`[data-city-range="${currentCityRange}"]`);
+            if (buttonToActivate) buttonToActivate.className = cityRangeActiveClass;
+
+            updateCityChart();
+            syncUrlState();
+        }
+
         document.getElementById('citySelector').addEventListener('change', function(e) {
             currentCity = e.target.value;
-            cityChart.data.datasets = [{
-                label: getMetricLabel(currentMetric),
-                data: getCityData(currentCity, currentMetric),
-                borderColor: getMetricColor(currentMetric),
-                backgroundColor: getMetricColor(currentMetric) + '20',
-                fill: true,
-                tension: 0.4
-            }];
-            cityChart.update();
+            setStoredValue('cityChartCity', currentCity);
+            updateCityChart();
+            syncUrlState();
         });
 
-        // Update city chart when metric changes
-        document.getElementById('cityMetric').addEventListener('change', function(e) {
-            currentMetric = e.target.value;
-            cityChart.data.datasets = [{
-                label: getMetricLabel(currentMetric),
-                data: getCityData(currentCity, currentMetric),
-                borderColor: getMetricColor(currentMetric),
-                backgroundColor: getMetricColor(currentMetric) + '20',
-                fill: true,
-                tension: 0.4
-            }];
-            cityChart.update();
+        document.getElementById('cityMetricMode').addEventListener('change', function(e) {
+            currentCityMetricMode = e.target.value;
+            if (!cityMetricModes.includes(currentCityMetricMode)) currentCityMetricMode = 'all';
+            setStoredValue('cityChartMetric', currentCityMetricMode);
+            updateCityToggleState();
+            updateCityChart();
+            syncUrlState();
         });
+
+        ['cityShowMA3','cityShowMA6','cityShowMA12','cityShowTrend'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('change', () => {
+                if (currentCityMetricMode !== 'all') {
+                    updateCityChart();
+                }
+            });
+        });
+
+        document.querySelectorAll('.city-range-button').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                setCityRange(btn.getAttribute('data-city-range'), btn);
+            });
+        });
+
+        // Initial state for city range buttons
+        setCityRange(currentCityRange, document.querySelector(`[data-city-range="${currentCityRange}"]`));
+
+        // Apply initial range selection to update titles and button state
+        setTimeout(() => {
+            const btn = document.querySelector(`[data-range="${initialRange}"]`);
+            setDateRange(initialRange, btn);
+        }, 0);
 
         // ============= MULTI-CITY COMPARISON TOOL =============
 
@@ -1126,8 +1664,13 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
             '#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'
         ];
 
-        let selectedCities = [];
-        let multiCityMetric = 'inventory';
+        const storedMultiCities = parseStoredArray(getStoredValue('mc_selected_cities'));
+        let selectedCities = Array.from(new Set((initialMultiCitiesFromUrl.length ? initialMultiCitiesFromUrl : storedMultiCities))).filter(city => availableCities.includes(city)).slice(0, 10);
+
+        const multiMetricOptions = ['inventory','sales','dom','price'];
+        const storedMultiMetric = getStoredValue('mc_metric');
+        let multiCityMetric = initialMultiMetricFromUrl || storedMultiMetric || 'inventory';
+        if (!multiMetricOptions.includes(multiCityMetric)) multiCityMetric = 'inventory';
 
         // Generate checkbox list
         function generateCityCheckboxes() {
@@ -1138,10 +1681,11 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
                 const div = document.createElement('div');
                 div.className = 'flex items-center gap-2 p-2 hover:bg-white/5 rounded cursor-pointer';
                 div.innerHTML = `
-                    <input type="checkbox" id="city_$${index}" value="${city}"
+                    <input type="checkbox" id="city_${index}" value="${city}"
                            class="city-checkbox w-4 h-4 cursor-pointer"
+                           aria-label="Select ${city}"
                            onchange="toggleCity(this)">
-                    <label for="city_$${index}" class="cursor-pointer flex-1 text-sm">${city}</label>
+                    <label for="city_${index}" class="cursor-pointer flex-1 text-sm">${city}</label>
                 `;
                 container.appendChild(div);
             });
@@ -1151,6 +1695,9 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
         function toggleCity(checkbox) {
             const city = checkbox.value;
             if (checkbox.checked) {
+                if (selectedCities.includes(city)) {
+                    return;
+                }
                 if (selectedCities.length < 10) {
                     selectedCities.push(city);
                 } else {
@@ -1163,6 +1710,8 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
             }
             updateSelectedCitiesList();
             updateMultiCityChart();
+            setStoredValue('mc_selected_cities', JSON.stringify(selectedCities));
+            syncUrlState();
         }
 
         // Update selected cities display
@@ -1195,25 +1744,21 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
 
         // Get city data for multi-city chart
         function getMultiCityData(city, metric) {
-            if (!fullCityTrends[city]) return [];
-
-            if (metric === 'inventory') {
-                return fullCityTrends[city].map(t => t.inventory);
-            } else if (metric === 'sales') {
-                return fullCityTrends[city].map(t => t.homes_sold);
-            } else if (metric === 'dom') {
-                return fullCityTrends[city].map(t => t.median_dom);
-            } else if (metric === 'price') {
-                return fullCityTrends[city].map(t => t.median_sale_price);
-            }
+            const series = (fullCityTrends[city] || cityTrends[city]);
+            if (!series) return [];
+            const key = resolveMetricKey(metric);
+            return series.map(t => t[key] ?? null);
         }
 
-        // Get multi-city labels (use first city's periods)
-        function getMultiCityLabels() {
+        // Build union of periods across selected cities (sorted)
+        function getMultiCityPeriods() {
             if (selectedCities.length === 0) return [];
-            const firstCity = selectedCities[0];
-            if (!fullCityTrends[firstCity]) return [];
-            return formatLabels(fullCityTrends[firstCity].map(t => t.period));
+            const set = new Set();
+            selectedCities.forEach(city => {
+                const series = (fullCityTrends[city] || cityTrends[city] || []);
+                series.forEach(t => set.add(t.period));
+            });
+            return Array.from(set).sort();
         }
 
         // Multi-city chart
@@ -1242,82 +1787,235 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
                 multiCityChart.data.labels = [];
                 multiCityChart.data.datasets = [];
                 multiCityChart.update();
+                syncUrlState();
                 return;
             }
 
-            const labels = getMultiCityLabels();
+            const periods = getMultiCityPeriods();
+            const labels = formatLabels(periods);
             const datasets = [];
+            const metricKey = resolveMetricKey(multiCityMetric);
+            const metroMap = Object.fromEntries((fullMetroTrends || []).map(t => [t.period, t]));
 
             // Add main city data
             selectedCities.forEach((city, i) => {
                 const color = cityColors[i % cityColors.length];
-                const cityData = getMultiCityData(city, multiCityMetric);
+                const series = (fullCityTrends[city] || cityTrends[city] || []);
+                const map = Object.fromEntries(series.map(t => [t.period, t]));
+                const tooltipSource = getMultiCityTooltipSource(city);
+                const base = periods.map(p => {
+                    const t = map[p];
+                    if (!t) return null;
+                    return t[metricKey] ?? null;
+                });
 
                 datasets.push({
                     label: city,
-                    data: cityData,
+                    data: base,
                     borderColor: color,
                     backgroundColor: color + '20',
                     tension: 0.4,
-                    borderWidth: 2
+                    borderWidth: 2,
+                    metaKey: metricKey,
+                    tooltipSource: () => tooltipSource
                 });
 
                 // Add moving averages for each city if enabled
                 if (document.getElementById('multiCityMA3').checked) {
                     datasets.push({
                         label: city + ' (3-Mo MA)',
-                        data: calculateSMA(cityData, 3),
+                        data: calculateSMA(base, 3),
                         borderColor: color,
                         borderDash: [5, 5],
                         borderWidth: 1,
                         tension: 0.4,
-                        pointRadius: 0
+                        pointRadius: 0,
+                        metaKey: null
                     });
                 }
                 if (document.getElementById('multiCityMA6').checked) {
                     datasets.push({
                         label: city + ' (6-Mo MA)',
-                        data: calculateSMA(cityData, 6),
+                        data: calculateSMA(base, 6),
                         borderColor: color,
                         borderDash: [8, 4],
                         borderWidth: 1,
                         tension: 0.4,
-                        pointRadius: 0
+                        pointRadius: 0,
+                        metaKey: null
                     });
                 }
                 if (document.getElementById('multiCityMA12').checked) {
                     datasets.push({
                         label: city + ' (12-Mo MA)',
-                        data: calculateSMA(cityData, 12),
+                        data: calculateSMA(base, 12),
                         borderColor: color,
                         borderDash: [10, 3],
                         borderWidth: 1,
                         tension: 0.4,
-                        pointRadius: 0
+                        pointRadius: 0,
+                        metaKey: null
                     });
                 }
                 if (document.getElementById('multiCityTrend').checked) {
                     datasets.push({
                         label: city + ' (Trend)',
-                        data: calculateTrendLine(cityData),
+                        data: calculateTrendLine(base),
                         borderColor: color,
                         borderDash: [2, 2],
                         borderWidth: 1,
                         tension: 0,
-                        pointRadius: 0
+                        pointRadius: 0,
+                        metaKey: null
                     });
                 }
             });
 
+            const overlayEnabled = metroOverlayEl ? metroOverlayEl.checked : false;
+            if (overlayEnabled && periods.length) {
+                const derived = derivedKeysForMetricKey(metricKey);
+                const metroTooltip = {};
+                metroTooltip[metricKey] = periods.map(p => (metroMap[p] ? metroMap[p][metricKey] ?? null : null));
+                metroTooltip[derived.mom] = periods.map(p => (metroMap[p] ? metroMap[p][derived.mom] ?? null : null));
+                metroTooltip[derived.yoy] = periods.map(p => (metroMap[p] ? metroMap[p][derived.yoy] ?? null : null));
+
+                datasets.push({
+                    label: 'Metro Benchmark',
+                    data: metroTooltip[metricKey],
+                    borderColor: '#e5e7eb',
+                    borderDash: [6, 4],
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    metaKey: metricKey,
+                    tooltipSource: () => metroTooltip
+                });
+            }
+
             multiCityChart.data.labels = labels;
             multiCityChart.data.datasets = datasets;
             multiCityChart.update();
+            syncUrlState();
         }
 
         // Update metric for multi-city chart
+        const multiMetricEl = document.getElementById('multiCityMetric');
+        if (multiMetricEl) multiMetricEl.value = multiCityMetric;
         document.getElementById('multiCityMetric').addEventListener('change', function(e) {
             multiCityMetric = e.target.value;
+            if (!multiMetricOptions.includes(multiCityMetric)) multiCityMetric = 'inventory';
+            setStoredValue('mc_metric', multiCityMetric);
             updateMultiCityChart();
+            syncUrlState();
+        });
+
+        const metroOverlayEl = document.getElementById('multiCityMetro');
+        const storedMetroOverlay = getStoredValue('mc_metro_overlay') === '1';
+        const metroOverlayInitial = hasMetroOverlayParam ? initialMetroOverlayFromUrl : storedMetroOverlay;
+        if (metroOverlayEl) {
+            metroOverlayEl.checked = metroOverlayInitial;
+            metroOverlayEl.addEventListener('change', function(e) {
+                setStoredValue('mc_metro_overlay', e.target.checked ? '1' : '0');
+                updateMultiCityChart();
+                syncUrlState();
+            });
+        }
+
+        // Bulk selection helpers
+        function currentValueForCity(city, metric) {
+            const series = (fullCityTrends[city] || cityTrends[city] || []);
+            if (!series.length) return null;
+            // Prefer the data point for the current period, else last point
+            const exact = series.find(t => t.period === currentPeriod);
+            const t = exact || series[series.length - 1];
+            if (!t) return null;
+            if (metric === 'sales') return t.homes_sold ?? null;
+            if (metric === 'mos') {
+                const inv = t.inventory, sold = t.homes_sold;
+                return (inv && sold) ? inv / sold : null;
+            }
+            return null;
+        }
+
+        function bulkSelectTop(metricKey) {
+            // metricKey: 'sales' or 'mos'
+            const scored = availableCities.map(c => ({
+                city: c,
+                val: currentValueForCity(c, metricKey)
+            })).filter(o => o.val !== null);
+            if (!scored.length) return;
+            // Sort desc for both (higher sales better, higher MoS indicates more supply)
+            scored.sort((a,b) => b.val - a.val);
+            const top = scored.slice(0, 5).map(o => o.city);
+
+            // Clear all
+            document.querySelectorAll('#cityCheckboxList input[type="checkbox"]').forEach(cb => cb.checked = false);
+            selectedCities = [];
+            // Check top
+            top.forEach(c => {
+                const input = [...document.querySelectorAll('#cityCheckboxList input[type="checkbox"]')].find(el => el.value === c);
+                if (input) { input.checked = true; selectedCities.push(c); }
+            });
+            updateSelectedCitiesList();
+            updateMultiCityChart();
+            setStoredValue('mc_selected_cities', JSON.stringify(selectedCities));
+            syncUrlState();
+        }
+
+        document.getElementById('btnTopSales').addEventListener('click', function(e){ e.preventDefault(); bulkSelectTop('sales'); });
+        document.getElementById('btnTopSupply').addEventListener('click', function(e){ e.preventDefault(); bulkSelectTop('mos'); });
+        document.getElementById('btnClearSel').addEventListener('click', function(e){
+            e.preventDefault();
+            document.querySelectorAll('#cityCheckboxList input[type="checkbox"]').forEach(cb => cb.checked = false);
+            selectedCities = [];
+            updateSelectedCitiesList();
+            updateMultiCityChart();
+            setStoredValue('mc_selected_cities', JSON.stringify(selectedCities));
+            syncUrlState();
+        });
+
+        // Restore previously selected cities from localStorage
+        function restoreMultiCitySelection() {
+            const inputs = document.querySelectorAll('#cityCheckboxList input[type="checkbox"]');
+            inputs.forEach(cb => {
+                cb.checked = selectedCities.includes(cb.value);
+            });
+            updateSelectedCitiesList();
+            updateMultiCityChart();
+            setStoredValue('mc_selected_cities', JSON.stringify(selectedCities));
+            syncUrlState();
+        }
+
+        // Reset all saved UI state
+        document.getElementById('btnResetState').addEventListener('click', function(e){
+            e.preventDefault();
+            try {
+                ['date_range','cityChartCity','cityChartMetric','mc_metric','mc_selected_cities','mc_metro_overlay'].forEach(k => removeStoredValue(k));
+            } catch (e) {}
+            // Reset selections
+            if (citySelectEl) citySelectEl.value = cityNames[0];
+            if (metricSelectEl) metricSelectEl.value = 'all';
+            currentCity = cityNames[0];
+            currentCityMetricMode = 'all';
+            setStoredValue('cityChartCity', currentCity);
+            setStoredValue('cityChartMetric', currentCityMetricMode);
+            updateCityToggleState();
+            updateCityChart();
+            setCityRange('24m', document.querySelector('[data-city-range="24m"]'));
+
+            selectedCities = [];
+            document.querySelectorAll('#cityCheckboxList input[type="checkbox"]').forEach(cb => cb.checked = false);
+            updateSelectedCitiesList();
+            updateMultiCityChart();
+            setStoredValue('mc_selected_cities', JSON.stringify(selectedCities));
+            multiCityMetric = 'inventory';
+            if (multiMetricEl) multiMetricEl.value = 'inventory';
+            setStoredValue('mc_metric', multiCityMetric);
+            if (metroOverlayEl) {
+                metroOverlayEl.checked = false;
+                setStoredValue('mc_metro_overlay', '0');
+            }
+            setDateRange('12m', document.querySelector('[data-range="12m"]'));
+            syncUrlState();
         });
 
         // ============= EXPORT FUNCTIONS =============
@@ -1327,13 +2025,13 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
             const chartElement = document.getElementById(chartId);
             const url = chartElement.toDataURL('image/png');
             const link = document.createElement('a');
-            link.download = filename + '_' + '{period}' + '.png';
+            link.download = filename + '_' + currentPeriod + '.png';
             link.href = url;
             link.click();
         }
 
         // Export chart data to CSV
-        function exportChartCSV(chartId, filename) {{
+        function exportChartCSV(chartId, filename) {
             const chart = Chart.getChart(chartId);
             if (!chart) return;
 
@@ -1342,33 +2040,34 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
 
             // Build CSV content
             let csv = 'Period';
-            datasets.forEach(ds => {{
+            datasets.forEach(ds => {
                 csv += ',' + ds.label.replace(/,/g, ' ');
-            }});
+            });
             csv += '\\n';
 
             // Add data rows
-            labels.forEach((label, i) => {{
+            labels.forEach((label, i) => {
                 csv += label;
-                datasets.forEach(ds => {{
+                datasets.forEach(ds => {
                     const value = ds.data[i];
                     csv += ',' + (value !== null && value !== undefined ? value : '');
-                }});
+                });
                 csv += '\\n';
-            }});
+            });
 
             // Download CSV file
-            const blob = new Blob([csv], {{ type: 'text/csv' }});
+            const blob = new Blob([csv], { type: 'text/csv' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
-            link.download = filename + '_' + '{period}' + '.csv';
+            link.download = filename + '_' + currentPeriod + '.csv';
             link.href = url;
             link.click();
             URL.revokeObjectURL(url);
-        }}
+        }
 
         // Initialize
         generateCityCheckboxes();
+        restoreMultiCitySelection();
     </script>
 </body>
 </html>'''
