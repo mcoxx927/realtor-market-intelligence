@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Charlotte-Concord-Gastonia Real Estate Market Dashboard - September 2025</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        .card {
+            background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+        .metric-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .health-score {
+            background: linear-gradient(135deg, #78350f 0%, rgba(0, 0, 0, 0.4) 100%);
+            border: 2px solid #f59e0b;
+        }
+        .trend-up {
+            color: #10b981;
+        }
+        .trend-down {
+            color: #ef4444;
+        }
+        .trend-neutral {
+            color: #6b7280;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-in {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+    <div class="max-w-7xl mx-auto space-y-6">
+
+        <!-- Header -->
+        <div class="card rounded-2xl p-6 md:p-8 animate-in">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-bold text-white mb-2">Charlotte-Concord-Gastonia Market Intelligence</h1>
+                    <p class="text-gray-400 text-lg">September 2025 Market Analysis</p>
+                </div>
+                <div class="health-score rounded-xl p-6 text-center">
+                    <div class="text-sm text-gray-300 mb-2">Market Health Score</div>
+                    <div class="text-5xl font-bold" style="color: #f59e0b;">55</div>
+                    <div class="text-xl font-semibold mt-2" style="color: #f59e0b;">NEUTRAL</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Metrics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Median Price -->
+            <div class="card rounded-xl p-6 animate-in">
+                <div class="text-gray-400 text-sm mb-2">Median Listing Price</div>
+                <div class="text-3xl font-bold text-white mb-2">$438,500</div>
+                <div class="flex items-center gap-2 text-sm">
+                    <span class="trend-down">
+                        -0.3% MoM
+                    </span>
+                    <span class="text-gray-500">|</span>
+                    <span class="trend-up">
+                        +2.0% YoY
+                    </span>
+                </div>
+            </div>
+
+            <!-- Active Listings -->
+            <div class="card rounded-xl p-6 animate-in" style="animation-delay: 0.1s;">
+                <div class="text-gray-400 text-sm mb-2">Active Listings</div>
+                <div class="text-3xl font-bold text-white mb-2">10,131</div>
+                <div class="flex items-center gap-2 text-sm">
+                    <span class="trend-up">
+                        +3.9% MoM
+                    </span>
+                    <span class="text-gray-500">|</span>
+                    <span class="trend-up">
+                        +36.0% YoY
+                    </span>
+                </div>
+            </div>
+
+            <!-- Days on Market -->
+            <div class="card rounded-xl p-6 animate-in" style="animation-delay: 0.2s;">
+                <div class="text-gray-400 text-sm mb-2">Days on Market</div>
+                <div class="text-3xl font-bold text-white mb-2">58 days</div>
+                <div class="flex items-center gap-2 text-sm">
+                    <span class="trend-down">
+                        +1.8% MoM
+                    </span>
+                    <span class="text-gray-500">|</span>
+                    <span class="trend-down">
+                        +20.2% YoY
+                    </span>
+                </div>
+            </div>
+
+            <!-- Pending Ratio -->
+            <div class="card rounded-xl p-6 animate-in" style="animation-delay: 0.3s;">
+                <div class="text-gray-400 text-sm mb-2">Pending Ratio</div>
+                <div class="text-3xl font-bold text-white mb-2">0.491</div>
+                <div class="flex items-center gap-2 text-sm">
+                    <span class="trend-down">
+                        -3.2% MoM
+                    </span>
+                    <span class="text-gray-500">|</span>
+                    <span class="trend-down">
+                        -11.6% YoY
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Executive Summary -->
+        <div class="card rounded-xl p-6 animate-in" style="animation-delay: 0.4s;">
+            <h2 class="text-2xl font-bold text-white mb-4">Executive Summary</h2>
+            <div class="space-y-3 text-gray-300">
+                <div class="flex items-start gap-3">
+                    <span class="text-2xl">&#8226;</span>
+                    <span>Market conditions are <strong style="color: #f59e0b;">NEUTRAL</strong> with a health score of 55/100, indicating balanced market dynamics with moderate activity.</span>
+                </div>
+                <div class="flex items-start gap-3">
+                    <span class="text-2xl">&#8226;</span>
+                    <span>Inventory levels remained relatively stable with 10,131 active listings, up 36.0% year-over-year.</span>
+                </div>
+                <div class="flex items-start gap-3">
+                    <span class="text-2xl">&#8226;</span>
+                    <span>Sales velocity shows homes selling in 58 days on average, reflecting balanced market conditions.</span>
+                </div>
+                <div class="flex items-start gap-3">
+                    <span class="text-2xl">&#8226;</span>
+                    <span>Pricing power has shifted to buyers with 4,912 price reductions (48.5% of inventory).</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventory Dynamics Chart -->
+        <div class="card rounded-xl p-6 animate-in" style="animation-delay: 0.5s;">
+            <h2 class="text-2xl font-bold text-white mb-4">Inventory Dynamics (Last 12 Months)</h2>
+            <div class="chart-container">
+                <canvas id="inventoryChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Pricing Analysis -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="card rounded-xl p-6 animate-in" style="animation-delay: 0.6s;">
+                <h2 class="text-2xl font-bold text-white mb-4">Median Price Trend</h2>
+                <div class="chart-container">
+                    <canvas id="priceChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card rounded-xl p-6 animate-in" style="animation-delay: 0.7s;">
+                <h2 class="text-2xl font-bold text-white mb-4">Price Adjustments</h2>
+                <div class="chart-container">
+                    <canvas id="priceAdjustmentChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Market Velocity -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="card rounded-xl p-6 animate-in" style="animation-delay: 0.8s;">
+                <h2 class="text-2xl font-bold text-white mb-4">Days on Market Trend</h2>
+                <div class="chart-container">
+                    <canvas id="domChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card rounded-xl p-6 animate-in" style="animation-delay: 0.9s;">
+                <h2 class="text-2xl font-bold text-white mb-4">Pending Ratio Trend</h2>
+                <div class="chart-container">
+                    <canvas id="pendingRatioChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Metrics -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="card rounded-xl p-6 animate-in" style="animation-delay: 1.0s;">
+                <div class="text-gray-400 text-sm mb-2">New Listings</div>
+                <div class="text-2xl font-bold text-white mb-2">4,046</div>
+                <div class="text-sm trend-up">
+                    +0.7% from last month
+                </div>
+            </div>
+
+            <div class="card rounded-xl p-6 animate-in" style="animation-delay: 1.1s;">
+                <div class="text-gray-400 text-sm mb-2">Price Reductions</div>
+                <div class="text-2xl font-bold text-white mb-2">4,912</div>
+                <div class="text-sm text-gray-400">
+                    48.5% of active inventory
+                </div>
+            </div>
+
+            <div class="card rounded-xl p-6 animate-in" style="animation-delay: 1.2s;">
+                <div class="text-gray-400 text-sm mb-2">Price per Sq Ft</div>
+                <div class="text-2xl font-bold text-white mb-2">$220</div>
+                <div class="text-sm text-gray-400">
+                    Median pricing metric
+                </div>
+            </div>
+        </div>
+
+        <!-- Predictive Insights -->
+        <div class="card rounded-xl p-6 animate-in" style="animation-delay: 1.3s;">
+            <h2 class="text-2xl font-bold text-white mb-4">Market Direction Indicator</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="metric-card rounded-lg p-4">
+                    <div class="text-gray-400 text-sm mb-2">Market Direction</div>
+                    <div class="text-xl font-bold" style="color: #f59e0b;">
+                        Stable
+                    </div>
+                </div>
+                <div class="metric-card rounded-lg p-4">
+                    <div class="text-gray-400 text-sm mb-2">Momentum Score</div>
+                    <div class="text-xl font-bold text-white">
+                        55/100
+                    </div>
+                </div>
+                <div class="metric-card rounded-lg p-4">
+                    <div class="text-gray-400 text-sm mb-2">Key Driver</div>
+                    <div class="text-xl font-bold text-white">
+                        Supply Growth
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 p-4 bg-blue-900 bg-opacity-30 rounded-lg">
+                <div class="text-white font-semibold mb-2">Watch Items for Next Month:</div>
+                <ul class="text-gray-300 space-y-1 text-sm">
+                    <li>&#8226; Monitor price reduction rates for signs of increasing seller pressure</li>
+                    <li>&#8226; Track new listing velocity as indicator of seller confidence</li>
+                    <li>&#8226; Watch pending ratio changes for early demand signals</li>
+                    <li>&#8226; Observe days on market trend for market absorption capacity</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center text-gray-500 text-sm pb-4">
+            Report generated on October 15, 2025 | Data source: Realtor.com | Analysis period: September 2025
+        </div>
+
+    </div>
+
+    <script>
+        Chart.defaults.color = '#9ca3af';
+        Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
+
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#e5e7eb',
+                        font: { size: 12 }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 52, 96, 0.95)',
+                    titleColor: '#fff',
+                    bodyColor: '#e5e7eb',
+                    borderColor: 'rgba(255, 255, 255, 0.2)',
+                    borderWidth: 1
+                }
+            },
+            scales: {
+                y: {
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: '#9ca3af' }
+                },
+                x: {
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: '#9ca3af' }
+                }
+            }
+        };
+
+        // Inventory Chart
+        new Chart(document.getElementById('inventoryChart'), {
+            type: 'line',
+            data: {
+                labels: ["Oct 2024", "Nov 2024", "Dec 2024", "Jan 2025", "Feb 2025", "Mar 2025", "Apr 2025", "May 2025", "Jun 2025", "Jul 2025", "Aug 2025", "Sep 2025"],
+                datasets: [
+                    {
+                        label: 'Active Listings',
+                        data: [7456, 7268, 6698, 6379, 6647, 7219, 8088, 8824, 9410, 9628, 9748, 10131],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'New Listings',
+                        data: [3178, 2964, 2088, 3182, 3624, 4456, 4942, 4728, 4412, 4470, 4020, 4046],
+                        borderColor: '#10b981',
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Pending Listings',
+                        data: [4485, 4340, 3627, 3396, 4282, 4866, 5579, 5669, 5505, 5291, 5101, 4975],
+                        borderColor: '#f59e0b',
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: chartOptions
+        });
+
+        // Price Chart
+        new Chart(document.getElementById('priceChart'), {
+            type: 'line',
+            data: {
+                labels: ["Oct 2024", "Nov 2024", "Dec 2024", "Jan 2025", "Feb 2025", "Mar 2025", "Apr 2025", "May 2025", "Jun 2025", "Jul 2025", "Aug 2025", "Sep 2025"],
+                datasets: [{
+                    label: 'Median Listing Price',
+                    data: [429947, 428750, 422450, 420000, 419475, 425000, 439500, 450000, 454500, 449433, 439999, 438500],
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                ...chartOptions,
+                scales: {
+                    ...chartOptions.scales,
+                    y: {
+                        ...chartOptions.scales.y,
+                        ticks: {
+                            color: '#9ca3af',
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Price Adjustment Chart
+        new Chart(document.getElementById('priceAdjustmentChart'), {
+            type: 'bar',
+            data: {
+                labels: ["Oct 2024", "Nov 2024", "Dec 2024", "Jan 2025", "Feb 2025", "Mar 2025", "Apr 2025", "May 2025", "Jun 2025", "Jul 2025", "Aug 2025", "Sep 2025"],
+                datasets: [
+                    {
+                        label: 'Price Reductions',
+                        data: [3436, 2832, 1988, 2456, 3046, 3480, 3958, 4480, 5024, 5254, 4832, 4912],
+                        backgroundColor: '#ef4444'
+                    },
+                    {
+                        label: 'Price Increases',
+                        data: [192, 116, 220, 298, 180, 192, 260, 216, 200, 210, 200, 194],
+                        backgroundColor: '#10b981'
+                    }
+                ]
+            },
+            options: chartOptions
+        });
+
+        // Days on Market Chart
+        new Chart(document.getElementById('domChart'), {
+            type: 'line',
+            data: {
+                labels: ["Oct 2024", "Nov 2024", "Dec 2024", "Jan 2025", "Feb 2025", "Mar 2025", "Apr 2025", "May 2025", "Jun 2025", "Jul 2025", "Aug 2025", "Sep 2025"],
+                datasets: [{
+                    label: 'Days on Market',
+                    data: [53, 55, 63, 67, 56, 43, 42, 44, 48, 53, 57, 58],
+                    borderColor: '#8b5cf6',
+                    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: chartOptions
+        });
+
+        // Pending Ratio Chart
+        new Chart(document.getElementById('pendingRatioChart'), {
+            type: 'line',
+            data: {
+                labels: ["Oct 2024", "Nov 2024", "Dec 2024", "Jan 2025", "Feb 2025", "Mar 2025", "Apr 2025", "May 2025", "Jun 2025", "Jul 2025", "Aug 2025", "Sep 2025"],
+                datasets: [{
+                    label: 'Pending Ratio',
+                    data: [0.6015, 0.5971, 0.5415, 0.5324, 0.6442, 0.6741, 0.6898, 0.6425, 0.585, 0.5496, 0.5233, 0.4911],
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: chartOptions
+        });
+    </script>
+</body>
+</html>

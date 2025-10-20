@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roanoke, VA Market Intelligence Dashboard - 2025-09</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        .card {
+            background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        .selector {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .selector:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+    </style>
+</head>
+<body class="min-h-screen p-6">
+    <div class="max-w-7xl mx-auto space-y-6">
+
+        <!-- Header -->
+        <div class="card p-8 text-white">
+            <h1 class="text-4xl font-bold mb-2">Roanoke, VA Market Intelligence</h1>
+            <p class="text-xl text-gray-300">2025-09 Analysis - 17 Cities</p>
+        </div>
+
+        <!-- Date Range Selector -->
+        <div class="card p-6 text-white">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                    <h3 class="text-lg font-bold mb-1">Date Range</h3>
+                    <p class="text-sm text-gray-400" id="dateRangeDisplay">Last 12 Months (Default)</p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="setDateRange('6m', this)" class="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm font-medium">Last 6 Months</button>
+                    <button onclick="setDateRange('12m', this)" class="px-4 py-2 bg-blue-500/40 border-2 border-blue-500 rounded-lg text-sm font-bold">Last 12 Months</button>
+                    <button onclick="setDateRange('ytd', this)" class="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm font-medium">YTD 2025</button>
+                    <button onclick="setDateRange('2y', this)" class="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm font-medium">Last 2 Years</button>
+                    <button onclick="setDateRange('5y', this)" class="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm font-medium">Last 5 Years</button>
+                    <button onclick="setDateRange('all', this)" class="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm font-medium">All Time</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Metro Stats Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="card p-6 text-white">
+                <div class="text-sm text-gray-400 mb-2">Total Sales</div>
+                <div class="text-3xl font-bold">243</div>
+            </div>
+            <div class="card p-6 text-white">
+                <div class="text-sm text-gray-400 mb-2">Median Price</div>
+                <div class="text-3xl font-bold">$357,566</div>
+            </div>
+            <div class="card p-6 text-white">
+                <div class="text-sm text-gray-400 mb-2">Days on Market</div>
+                <div class="text-3xl font-bold">26</div>
+            </div>
+            <div class="card p-6 text-white">
+                <div class="text-sm text-gray-400 mb-2">Active Inventory</div>
+                <div class="text-3xl font-bold">684</div>
+            </div>
+        </div>
+
+        <!-- Market Health Dashboard for Flippers -->
+        <div class="card p-6 text-white">
+            <h2 class="text-2xl font-bold mb-4">Market Health Dashboard - House Flipper Intelligence</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <!-- Market Type Gauge -->
+                <div class="p-4 bg-red-500/20 border border-red-500/50 rounded-lg">
+                    <div class="text-sm text-gray-400 mb-2">Market Type</div>
+                    <div class="text-xl font-bold text-red-400">SELLER'S MARKET</div>
+                    <div class="text-xs mt-2">&lt;5mo: Seller's | 5-6mo: Balanced | &gt;6mo: Buyer's</div>
+                </div>
+                <!-- Months of Supply -->
+                <div class="p-4 bg-blue-500/20 border border-blue-500/50 rounded-lg">
+                    <div class="text-sm text-gray-400 mb-2">Months of Supply</div>
+                    <div class="text-3xl font-bold text-blue-400">2.8</div>
+                    <div class="text-xs mt-2">Inventory / Sales Rate</div>
+                </div>
+                <!-- Absorption Rate -->
+                <div class="p-4 bg-purple-500/20 border border-purple-500/50 rounded-lg">
+                    <div class="text-sm text-gray-400 mb-2">Absorption Rate</div>
+                    <div class="text-3xl font-bold text-purple-400">35.5%</div>
+                    <div class="text-xs mt-2">Sales / Inventory</div>
+                </div>
+                <!-- Market Trend -->
+                <div class="p-4 bg-orange-500/20 border border-orange-500/50 rounded-lg">
+                    <div class="text-sm text-gray-400 mb-2">Market Trend (YoY)</div>
+                    <div class="text-lg font-bold text-orange-400">DOM +37%</div>
+                    <div class="text-xs mt-2">Inventory +56%</div>
+                </div>
+            </div>
+
+            <!-- Buy/Sell Signals Summary -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Buy Opportunities -->
+                <div class="p-4 bg-green-500/10 border-l-4 border-green-500 rounded">
+                    <div class="font-bold text-green-400 mb-2">BUY OPPORTUNITIES (0)</div>
+                    <div class="text-sm space-y-1">
+
+                    </div>
+                </div>
+                <!-- Hold Zones -->
+                <div class="p-4 bg-yellow-500/10 border-l-4 border-yellow-500 rounded">
+                    <div class="font-bold text-yellow-400 mb-2">HOLD ZONES (3)</div>
+                    <div class="text-sm space-y-1">
+                        <div>• Roanoke - 3.3mo, DOM 24</div>
+                        <div>• Cave Spring - 3.1mo, DOM 18</div>
+                        <div>• Westlake Corner - 3.5mo, DOM 44</div>
+                    </div>
+                </div>
+                <!-- Sell Fast -->
+                <div class="p-4 bg-red-500/10 border-l-4 border-red-500 rounded">
+                    <div class="font-bold text-red-400 mb-2">SELL FAST (3)</div>
+                    <div class="text-sm space-y-1">
+                        <div>• Salem - 2.6mo, DOM 21</div>
+                        <div>• Hollins - 1.7mo, DOM 31</div>
+                        <div>• North Shore - 2.0mo, DOM 39</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventory Dynamics with Dropdown -->
+        <div class="card p-6 text-white">
+            <div class="flex flex-col gap-4 mb-4">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold" id="inventoryChartTitle">Metro Inventory Dynamics (Last 12 Months)</h2>
+                    <div class="flex gap-2">
+                        <select id="inventoryMetric" class="selector">
+                            <option value="all">All Metrics</option>
+                            <option value="inventory">Active Listings Only</option>
+                            <option value="new_listings">New Listings Only</option>
+                            <option value="pending">Pending Sales Only</option>
+                        </select>
+                        <button onclick="downloadChartImage('inventoryChart', 'inventory_dynamics')" class="px-3 py-2 bg-green-500/20 hover:bg-green-500/40 border border-green-500/50 rounded-lg transition text-sm">
+                            <span>📊 PNG</span>
+                        </button>
+                        <button onclick="exportChartCSV('inventoryChart', 'inventory_dynamics')" class="px-3 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm">
+                            <span>📄 CSV</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-4 text-sm">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="showMA3" class="w-4 h-4 cursor-pointer" onchange="toggleMovingAverages()">
+                        <span>3-Month MA</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="showMA6" class="w-4 h-4 cursor-pointer" onchange="toggleMovingAverages()">
+                        <span>6-Month MA</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="showMA12" class="w-4 h-4 cursor-pointer" onchange="toggleMovingAverages()">
+                        <span>12-Month MA</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="showTrendLine" class="w-4 h-4 cursor-pointer" onchange="toggleMovingAverages()">
+                        <span>Trend Line</span>
+                    </label>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="inventoryChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Price Reductions Chart -->
+        <div class="card p-6 text-white">
+            <h2 class="text-2xl font-bold mb-4" id="priceDropsChartTitle">Price Reductions (Last 12 Months)</h2>
+            <div class="chart-container">
+                <canvas id="priceDropsChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Supply vs Demand Analysis -->
+        <div class="card p-6 text-white">
+            <h2 class="text-2xl font-bold mb-4" id="supplyDemandChartTitle">Supply vs Demand Balance (Last 12 Months)</h2>
+            <div class="mb-4 p-4 bg-blue-500/10 border-l-4 border-blue-500 rounded">
+                <div class="text-sm">
+                    <strong>Flipper Insight:</strong> When New Listings (supply) exceeds Homes Sold (demand), expect downward price pressure.
+                    Current ratio: 1.24 (supply outpacing demand).
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="supplyDemandChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Combined DOM + Pending Ratio -->
+        <div class="card p-6 text-white">
+            <h2 class="text-2xl font-bold mb-4" id="domPendingChartTitle">Days on Market & Pending Ratio (Last 12 Months)</h2>
+            <div class="chart-container">
+                <canvas id="domPendingChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Top 5 Cities Comparison (Single City View) -->
+        <div class="card p-6 text-white">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">Top 5 Cities Historical Trends</h2>
+                <div class="flex gap-2">
+                    <select id="citySelector" class="selector">
+                        <option value="Roanoke">Roanoke</option>
+<option value="Cave Spring">Cave Spring</option>
+<option value="Salem">Salem</option>
+<option value="Hollins">Hollins</option>
+<option value="North Shore">North Shore</option>
+                    </select>
+                    <select id="cityMetric" class="selector">
+                        <option value="inventory">Inventory</option>
+                        <option value="sales">Homes Sold</option>
+                        <option value="dom">Days on Market</option>
+                        <option value="price">Median Price</option>
+                    </select>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="cityChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Multi-City Comparison (New Feature) -->
+        <div class="card p-6 text-white">
+            <div class="mb-4 flex justify-between items-start">
+                <div>
+                    <h2 class="text-2xl font-bold mb-2">Multi-City Comparison Tool</h2>
+                    <p class="text-sm text-gray-400">Select multiple cities to compare side-by-side. All 24 cities available.</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="downloadChartImage('multiCityChart', 'multi_city_comparison')" class="px-3 py-2 bg-green-500/20 hover:bg-green-500/40 border border-green-500/50 rounded-lg transition text-sm">
+                        <span>📊 PNG</span>
+                    </button>
+                    <button onclick="exportChartCSV('multiCityChart', 'multi_city_comparison')" class="px-3 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm">
+                        <span>📄 CSV</span>
+                    </button>
+                </div>
+            </div>
+            <div class="grid md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Search & Select Cities</label>
+                    <input type="text" id="citySearch" placeholder="Search cities..." class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 mb-2">
+                    <div class="bg-white/5 border border-white/20 rounded-lg max-h-48 overflow-y-auto p-2" id="cityCheckboxList">
+                        <!-- Checkboxes will be generated by JavaScript -->
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Metric to Compare</label>
+                    <select id="multiCityMetric" class="selector w-full mb-4">
+                        <option value="inventory">Inventory</option>
+                        <option value="sales">Homes Sold</option>
+                        <option value="dom">Days on Market</option>
+                        <option value="price">Median Price</option>
+                    </select>
+                    <div>
+                        <div class="text-sm font-medium mb-2">Selected Cities (<span id="selectedCount">0</span>)</div>
+                        <div id="selectedCitiesList" class="text-sm text-gray-400 min-h-[100px]">
+                            No cities selected. Use checkboxes to select cities.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex flex-wrap gap-4 text-sm mb-4">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="multiCityMA3" class="w-4 h-4 cursor-pointer" onchange="updateMultiCityChart()">
+                    <span>3-Month MA</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="multiCityMA6" class="w-4 h-4 cursor-pointer" onchange="updateMultiCityChart()">
+                    <span>6-Month MA</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="multiCityMA12" class="w-4 h-4 cursor-pointer" onchange="updateMultiCityChart()">
+                    <span>12-Month MA</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="multiCityTrend" class="w-4 h-4 cursor-pointer" onchange="updateMultiCityChart()">
+                    <span>Trend Lines</span>
+                </label>
+            </div>
+            <div class="chart-container" style="height: 400px;">
+                <canvas id="multiCityChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Top Cities Table -->
+        <div class="card p-6 text-white">
+            <h2 class="text-2xl font-bold mb-4">Top 10 Cities by Sales Volume - Flipper Analysis</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="border-b border-gray-600">
+                        <tr class="text-left">
+                            <th class="pb-3">City</th>
+                            <th class="pb-3">Sales</th>
+                            <th class="pb-3">Median Price</th>
+                            <th class="pb-3">Price YoY</th>
+                            <th class="pb-3">DOM</th>
+                            <th class="pb-3">Mo Supply</th>
+                            <th class="pb-3">Absorption%</th>
+                            <th class="pb-3">Signal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-gray-700">
+                            <td class="py-3 font-medium">Roanoke</td>
+                            <td class="py-3">101</td>
+                            <td class="py-3">$224,000</td>
+                            <td class="py-3 text-red-400">-3.4%</td>
+                            <td class="py-3">24</td>
+                            <td class="py-3 font-bold">3.3</td>
+                            <td class="py-3">30.2%</td>
+                            <td class="py-3"><span class="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded text-xs font-bold">HOLD</span></td>
+                        </tr>
+                        <tr class="border-b border-gray-700">
+                            <td class="py-3 font-medium">Cave Spring</td>
+                            <td class="py-3">28</td>
+                            <td class="py-3">$367,000</td>
+                            <td class="py-3 text-green-400">3.4%</td>
+                            <td class="py-3">18</td>
+                            <td class="py-3 font-bold">3.1</td>
+                            <td class="py-3">31.8%</td>
+                            <td class="py-3"><span class="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded text-xs font-bold">HOLD</span></td>
+                        </tr>
+                        <tr class="border-b border-gray-700">
+                            <td class="py-3 font-medium">Salem</td>
+                            <td class="py-3">26</td>
+                            <td class="py-3">$290,000</td>
+                            <td class="py-3 text-red-400">-7.9%</td>
+                            <td class="py-3">21</td>
+                            <td class="py-3 font-bold">2.6</td>
+                            <td class="py-3">38.8%</td>
+                            <td class="py-3"><span class="px-2 py-1 bg-red-500/20 text-red-400 rounded text-xs font-bold">SELL</span></td>
+                        </tr>
+                        <tr class="border-b border-gray-700">
+                            <td class="py-3 font-medium">Hollins</td>
+                            <td class="py-3">22</td>
+                            <td class="py-3">$315,000</td>
+                            <td class="py-3 text-green-400">6.7%</td>
+                            <td class="py-3">31</td>
+                            <td class="py-3 font-bold">1.7</td>
+                            <td class="py-3">57.9%</td>
+                            <td class="py-3"><span class="px-2 py-1 bg-red-500/20 text-red-400 rounded text-xs font-bold">SELL</span></td>
+                        </tr>
+                        <tr class="border-b border-gray-700">
+                            <td class="py-3 font-medium">North Shore</td>
+                            <td class="py-3">21</td>
+                            <td class="py-3">$625,000</td>
+                            <td class="py-3 text-green-400">21.4%</td>
+                            <td class="py-3">39</td>
+                            <td class="py-3 font-bold">2.0</td>
+                            <td class="py-3">48.8%</td>
+                            <td class="py-3"><span class="px-2 py-1 bg-red-500/20 text-red-400 rounded text-xs font-bold">SELL</span></td>
+                        </tr>
+                        <tr class="border-b border-gray-700">
+                            <td class="py-3 font-medium">Rocky Mount</td>
+                            <td class="py-3">7</td>
+                            <td class="py-3">$218,000</td>
+                            <td class="py-3 text-red-400">-3.1%</td>
+                            <td class="py-3">7</td>
+                            <td class="py-3 font-bold">2.1</td>
+                            <td class="py-3">46.7%</td>
+                            <td class="py-3"><span class="px-2 py-1 bg-red-500/20 text-red-400 rounded text-xs font-bold">SELL</span></td>
+                        </tr>
+                        <tr class="border-b border-gray-700">
+                            <td class="py-3 font-medium">Vinton</td>
+                            <td class="py-3">6</td>
+                            <td class="py-3">$228,750</td>
+                            <td class="py-3 text-red-400">-9.2%</td>
+                            <td class="py-3">15</td>
+                            <td class="py-3 font-bold">2.5</td>
+                            <td class="py-3">40.0%</td>
+                            <td class="py-3"><span class="px-2 py-1 bg-red-500/20 text-red-400 rounded text-xs font-bold">SELL</span></td>
+                        </tr>
+                        <tr class="border-b border-gray-700">
+                            <td class="py-3 font-medium">Westlake Corner</td>
+                            <td class="py-3">6</td>
+                            <td class="py-3">$994,950</td>
+                            <td class="py-3 text-green-400">45.8%</td>
+                            <td class="py-3">44</td>
+                            <td class="py-3 font-bold">3.5</td>
+                            <td class="py-3">28.6%</td>
+                            <td class="py-3"><span class="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded text-xs font-bold">HOLD</span></td>
+                        </tr>
+                        <tr class="border-b border-gray-700">
+                            <td class="py-3 font-medium">Union Hall</td>
+                            <td class="py-3">5</td>
+                            <td class="py-3">$1,534,999</td>
+                            <td class="py-3 text-green-400">68.7%</td>
+                            <td class="py-3">88</td>
+                            <td class="py-3 font-bold">2.0</td>
+                            <td class="py-3">50.0%</td>
+                            <td class="py-3"><span class="px-2 py-1 bg-red-500/20 text-red-400 rounded text-xs font-bold">SELL</span></td>
+                        </tr>
+                        <tr class="border-b border-gray-700">
+                            <td class="py-3 font-medium">Cloverdale</td>
+                            <td class="py-3">5</td>
+                            <td class="py-3">$505,000</td>
+                            <td class="py-3 text-green-400">61.1%</td>
+                            <td class="py-3">25</td>
+                            <td class="py-3 font-bold">2.0</td>
+                            <td class="py-3">50.0%</td>
+                            <td class="py-3"><span class="px-2 py-1 bg-red-500/20 text-red-400 rounded text-xs font-bold">SELL</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- AI-Powered Flipper Insights -->
+        <div class="card p-6 text-white">
+            <h2 class="text-2xl font-bold mb-4">AI-Powered Flipper Insights - 2025-09</h2>
+            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                <!-- Buy Opportunities -->
+                <div class="p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+                    <h3 class="text-xl font-bold text-green-400 mb-3">Top Buy Opportunities</h3>
+                    <div class="space-y-3">
+                    </div>
+                </div>
+                <!-- Sell Fast Zones -->
+                <div class="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+                    <h3 class="text-xl font-bold text-red-400 mb-3">Sell Fast Zones</h3>
+                    <div class="space-y-3">
+                        <div class="p-3 bg-black/20 rounded">
+                            <div class="font-bold">1. Salem - SELL NOW</div>
+                            <div class="text-sm mt-1">• 2.6 months supply (seller's market)</div>
+                            <div class="text-sm">• DOM 21 days (moving fast)</div>
+                            <div class="text-sm">• High absorption rate: 38.8%</div>
+                            <div class="text-sm text-red-400 mt-2">Strategy: List competitively, expect quick sale</div>
+                        </div>
+                        <div class="p-3 bg-black/20 rounded">
+                            <div class="font-bold">2. Hollins - SELL NOW</div>
+                            <div class="text-sm mt-1">• 1.7 months supply (seller's market)</div>
+                            <div class="text-sm">• DOM 31 days (moving fast)</div>
+                            <div class="text-sm">• High absorption rate: 57.9%</div>
+                            <div class="text-sm text-red-400 mt-2">Strategy: List competitively, expect quick sale</div>
+                        </div>
+                        <div class="p-3 bg-black/20 rounded">
+                            <div class="font-bold">3. North Shore - SELL NOW</div>
+                            <div class="text-sm mt-1">• 2.0 months supply (seller's market)</div>
+                            <div class="text-sm">• DOM 39 days (moving fast)</div>
+                            <div class="text-sm">• High absorption rate: 48.8%</div>
+                            <div class="text-sm text-red-400 mt-2">Strategy: List competitively, expect quick sale</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Market Prediction -->
+            <div class="p-4 bg-blue-500/10 border-l-4 border-blue-500 rounded">
+                <h3 class="text-lg font-bold text-blue-400 mb-2">Market Prediction & Strategy</h3>
+                <div class="text-sm space-y-2">
+                    <p><strong>Current State:</strong> Roanoke, VA is a seller's market with 2.8 months of supply.
+                    Inventory up 56% YoY,
+                    DOM up 37% YoY.</p>
+                    <p><strong>Flipper Strategy:</strong></p>
+                    <ul class="list-disc ml-5 space-y-1">
+                        <li><strong>Acquisitions:</strong> Be selective. Seller's market means less negotiating power. Focus on distressed properties only.</li>
+                        <li><strong>Active Flips:</strong> If you have inventory, LIST NOW. Strong seller's market with low supply.</li>
+                        <li><strong>Hold Strategy:</strong> Can afford 90-120 day flips. Market will absorb inventory quickly.</li>
+                        <li><strong>Opportunity:</strong> Consider wholesale assignments - demand outpaces supply.</li>
+                    </ul>
+                    <p class="mt-3 text-yellow-400"><strong>Risk Alert:</strong> Low inventory - watch for over-competition on acquisitions.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="card p-6 text-white text-center text-sm text-gray-400">
+            <p>Dashboard generated from Redfin Market Tracker data</p>
+        </div>
+
+    </div>
+
+    <script>
+        // Chart defaults
+        Chart.defaults.color = '#9ca3af';
+        Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
+
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { labels: { color: '#e5e7eb' } },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 52, 96, 0.95)',
+                    titleColor: '#fff',
+                    bodyColor: '#e5e7eb'
+                }
+            },
+            scales: {
+                y: {
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: '#9ca3af' }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#9ca3af' }
+                }
+            }
+        };
+
+        // Data (12-month embedded for fast initial load)
+        const labels = ["Oct '24", "Nov '24", "Dec '24", "Jan '25", "Feb '25", "Mar '25", "Apr '25", "May '25", "Jun '25", "Jul '25", "Aug '25", "Sep '25"];
+        const inventoryData = [438, 439, 376, 385, 395, 450, 517, 593, 621, 676, 679, 684];
+        const newListingsData = [259, 229, 135, 220, 198, 356, 363, 382, 324, 353, 332, 301];
+        const pendingData = [254, 218, 170, 206, 190, 289, 300, 304, 289, 308, 310, 245];
+        const priceDropsData = [7, 3, 2, 4, 2, 3, 8, 5, 5, 5, 6, 7];
+        const domData = [19, 24, 23, 26, 32, 28, 18, 19, 20, 22, 30, 26];
+        const pendingRatioData = [0.5799086757990868, 0.49658314350797267, 0.4521276595744681, 0.535064935064935, 0.4810126582278481, 0.6422222222222222, 0.5802707930367504, 0.5126475548060708, 0.46537842190016104, 0.4556213017751479, 0.4565537555228277, 0.358187134502924];
+        const homesSoldData = [230, 230, 215, 169, 158, 191, 240, 301, 263, 291, 293, 243];
+
+        // City trends data (12-month default, top 5 cities)
+        const cityTrends = {"Roanoke": [{"period": "2024-10", "inventory": 196, "new_listings": 136, "pending_sales": 113, "homes_sold": 105, "price_drops": 0, "median_sale_price": 222000, "median_dom": 17, "pending_ratio": 0.576530612244898}, {"period": "2024-11", "inventory": 200, "new_listings": 111, "pending_sales": 103, "homes_sold": 103, "price_drops": 0, "median_sale_price": 211000, "median_dom": 17, "pending_ratio": 0.515}, {"period": "2024-12", "inventory": 178, "new_listings": 65, "pending_sales": 84, "homes_sold": 100, "price_drops": 0, "median_sale_price": 232000, "median_dom": 18, "pending_ratio": 0.47191011235955055}, {"period": "2025-01", "inventory": 205, "new_listings": 125, "pending_sales": 94, "homes_sold": 78, "price_drops": 0, "median_sale_price": 233711, "median_dom": 25, "pending_ratio": 0.4585365853658537}, {"period": "2025-02", "inventory": 216, "new_listings": 98, "pending_sales": 90, "homes_sold": 70, "price_drops": 0, "median_sale_price": 220000, "median_dom": 22, "pending_ratio": 0.4166666666666667}, {"period": "2025-03", "inventory": 227, "new_listings": 162, "pending_sales": 140, "homes_sold": 83, "price_drops": 0, "median_sale_price": 228500, "median_dom": 22, "pending_ratio": 0.6167400881057269}, {"period": "2025-04", "inventory": 259, "new_listings": 159, "pending_sales": 121, "homes_sold": 119, "price_drops": 0, "median_sale_price": 245000, "median_dom": 21, "pending_ratio": 0.4671814671814672}, {"period": "2025-05", "inventory": 293, "new_listings": 170, "pending_sales": 126, "homes_sold": 120, "price_drops": 0, "median_sale_price": 245950, "median_dom": 14, "pending_ratio": 0.4300341296928328}, {"period": "2025-06", "inventory": 308, "new_listings": 156, "pending_sales": 137, "homes_sold": 102, "price_drops": 0, "median_sale_price": 256000, "median_dom": 19, "pending_ratio": 0.4448051948051948}, {"period": "2025-07", "inventory": 331, "new_listings": 157, "pending_sales": 144, "homes_sold": 133, "price_drops": 0, "median_sale_price": 256000, "median_dom": 19, "pending_ratio": 0.4350453172205438}, {"period": "2025-08", "inventory": 327, "new_listings": 145, "pending_sales": 140, "homes_sold": 148, "price_drops": 0, "median_sale_price": 249950, "median_dom": 31, "pending_ratio": 0.42813455657492355}, {"period": "2025-09", "inventory": 334, "new_listings": 149, "pending_sales": 119, "homes_sold": 101, "price_drops": 0, "median_sale_price": 224000, "median_dom": 24, "pending_ratio": 0.3562874251497006}], "Cave Spring": [{"period": "2024-10", "inventory": 57, "new_listings": 38, "pending_sales": 38, "homes_sold": 26, "price_drops": 0, "median_sale_price": 415500, "median_dom": 14, "pending_ratio": 0.6666666666666666}, {"period": "2024-11", "inventory": 49, "new_listings": 27, "pending_sales": 36, "homes_sold": 26, "price_drops": 0, "median_sale_price": 344925, "median_dom": 19, "pending_ratio": 0.7346938775510204}, {"period": "2024-12", "inventory": 48, "new_listings": 26, "pending_sales": 26, "homes_sold": 34, "price_drops": 0, "median_sale_price": 337700, "median_dom": 22, "pending_ratio": 0.5416666666666666}, {"period": "2025-01", "inventory": 33, "new_listings": 17, "pending_sales": 32, "homes_sold": 24, "price_drops": 0, "median_sale_price": 338975, "median_dom": 29, "pending_ratio": 0.9696969696969697}, {"period": "2025-02", "inventory": 32, "new_listings": 21, "pending_sales": 24, "homes_sold": 23, "price_drops": 0, "median_sale_price": 339900, "median_dom": 20, "pending_ratio": 0.75}, {"period": "2025-03", "inventory": 47, "new_listings": 53, "pending_sales": 39, "homes_sold": 25, "price_drops": 0, "median_sale_price": 315000, "median_dom": 47, "pending_ratio": 0.8297872340425532}, {"period": "2025-04", "inventory": 45, "new_listings": 51, "pending_sales": 54, "homes_sold": 29, "price_drops": 0, "median_sale_price": 356000, "median_dom": 8, "pending_ratio": 1.2}, {"period": "2025-05", "inventory": 53, "new_listings": 60, "pending_sales": 53, "homes_sold": 53, "price_drops": 0, "median_sale_price": 350000, "median_dom": 13, "pending_ratio": 1.0}, {"period": "2025-06", "inventory": 54, "new_listings": 31, "pending_sales": 33, "homes_sold": 43, "price_drops": 0, "median_sale_price": 382700, "median_dom": 17, "pending_ratio": 0.6111111111111112}, {"period": "2025-07", "inventory": 68, "new_listings": 53, "pending_sales": 32, "homes_sold": 43, "price_drops": 0, "median_sale_price": 387000, "median_dom": 15, "pending_ratio": 0.47058823529411764}, {"period": "2025-08", "inventory": 66, "new_listings": 41, "pending_sales": 36, "homes_sold": 30, "price_drops": 0, "median_sale_price": 369000, "median_dom": 20, "pending_ratio": 0.5454545454545454}, {"period": "2025-09", "inventory": 88, "new_listings": 52, "pending_sales": 28, "homes_sold": 28, "price_drops": 0, "median_sale_price": 367000, "median_dom": 18, "pending_ratio": 0.3181818181818182}], "Salem": [{"period": "2024-10", "inventory": 43, "new_listings": 21, "pending_sales": 28, "homes_sold": 21, "price_drops": 0, "median_sale_price": 249950, "median_dom": 10, "pending_ratio": 0.6511627906976745}, {"period": "2024-11", "inventory": 36, "new_listings": 17, "pending_sales": 21, "homes_sold": 24, "price_drops": 0, "median_sale_price": 314750, "median_dom": 25, "pending_ratio": 0.5833333333333334}, {"period": "2024-12", "inventory": 33, "new_listings": 15, "pending_sales": 17, "homes_sold": 18, "price_drops": 0, "median_sale_price": 278500, "median_dom": 19, "pending_ratio": 0.5151515151515151}, {"period": "2025-01", "inventory": 30, "new_listings": 19, "pending_sales": 20, "homes_sold": 17, "price_drops": 0, "median_sale_price": 282000, "median_dom": 21, "pending_ratio": 0.6666666666666666}, {"period": "2025-02", "inventory": 30, "new_listings": 24, "pending_sales": 27, "homes_sold": 17, "price_drops": 0, "median_sale_price": 320000, "median_dom": 68, "pending_ratio": 0.9}, {"period": "2025-03", "inventory": 42, "new_listings": 40, "pending_sales": 31, "homes_sold": 27, "price_drops": 0, "median_sale_price": 235000, "median_dom": 16, "pending_ratio": 0.7380952380952381}, {"period": "2025-04", "inventory": 54, "new_listings": 41, "pending_sales": 29, "homes_sold": 21, "price_drops": 0, "median_sale_price": 280000, "median_dom": 7, "pending_ratio": 0.5370370370370371}, {"period": "2025-05", "inventory": 48, "new_listings": 34, "pending_sales": 40, "homes_sold": 29, "price_drops": 0, "median_sale_price": 314950, "median_dom": 18, "pending_ratio": 0.8333333333333334}, {"period": "2025-06", "inventory": 51, "new_listings": 37, "pending_sales": 32, "homes_sold": 37, "price_drops": 0, "median_sale_price": 270000, "median_dom": 11, "pending_ratio": 0.6274509803921569}, {"period": "2025-07", "inventory": 56, "new_listings": 34, "pending_sales": 30, "homes_sold": 21, "price_drops": 0, "median_sale_price": 260000, "median_dom": 26, "pending_ratio": 0.5357142857142857}, {"period": "2025-08", "inventory": 72, "new_listings": 47, "pending_sales": 32, "homes_sold": 33, "price_drops": 0, "median_sale_price": 305000, "median_dom": 20, "pending_ratio": 0.4444444444444444}, {"period": "2025-09", "inventory": 67, "new_listings": 29, "pending_sales": 31, "homes_sold": 26, "price_drops": 0, "median_sale_price": 290000, "median_dom": 21, "pending_ratio": 0.4626865671641791}], "Hollins": [{"period": "2024-10", "inventory": 30, "new_listings": 15, "pending_sales": 23, "homes_sold": 25, "price_drops": 0, "median_sale_price": 265000, "median_dom": 17, "pending_ratio": 0.7666666666666667}, {"period": "2024-11", "inventory": 30, "new_listings": 17, "pending_sales": 18, "homes_sold": 21, "price_drops": 0, "median_sale_price": 285000, "median_dom": 28, "pending_ratio": 0.6}, {"period": "2024-12", "inventory": 21, "new_listings": 3, "pending_sales": 11, "homes_sold": 17, "price_drops": 0, "median_sale_price": 280000, "median_dom": 15, "pending_ratio": 0.5238095238095238}, {"period": "2025-01", "inventory": 20, "new_listings": 11, "pending_sales": 13, "homes_sold": 12, "price_drops": 0, "median_sale_price": 307500, "median_dom": 18, "pending_ratio": 0.65}, {"period": "2025-02", "inventory": 23, "new_listings": 13, "pending_sales": 9, "homes_sold": 10, "price_drops": 0, "median_sale_price": 273225, "median_dom": 42, "pending_ratio": 0.391304347826087}, {"period": "2025-03", "inventory": 24, "new_listings": 24, "pending_sales": 23, "homes_sold": 11, "price_drops": 0, "median_sale_price": 325000, "median_dom": 21, "pending_ratio": 0.9583333333333334}, {"period": "2025-04", "inventory": 19, "new_listings": 20, "pending_sales": 25, "homes_sold": 19, "price_drops": 0, "median_sale_price": 310000, "median_dom": 16, "pending_ratio": 1.3157894736842106}, {"period": "2025-05", "inventory": 38, "new_listings": 32, "pending_sales": 12, "homes_sold": 20, "price_drops": 0, "median_sale_price": 339250, "median_dom": 8, "pending_ratio": 0.3157894736842105}, {"period": "2025-06", "inventory": 42, "new_listings": 27, "pending_sales": 24, "homes_sold": 16, "price_drops": 0, "median_sale_price": 303650, "median_dom": 25, "pending_ratio": 0.5714285714285714}, {"period": "2025-07", "inventory": 46, "new_listings": 25, "pending_sales": 22, "homes_sold": 23, "price_drops": 0, "median_sale_price": 300000, "median_dom": 18, "pending_ratio": 0.4782608695652174}, {"period": "2025-08", "inventory": 50, "new_listings": 26, "pending_sales": 23, "homes_sold": 18, "price_drops": 0, "median_sale_price": 324475, "median_dom": 22, "pending_ratio": 0.46}, {"period": "2025-09", "inventory": 38, "new_listings": 16, "pending_sales": 24, "homes_sold": 22, "price_drops": 0, "median_sale_price": 315000, "median_dom": 31, "pending_ratio": 0.631578947368421}], "North Shore": [{"period": "2024-10", "inventory": 26, "new_listings": 11, "pending_sales": 9, "homes_sold": 11, "price_drops": 0, "median_sale_price": 740000, "median_dom": 34, "pending_ratio": 0.34615384615384615}, {"period": "2024-11", "inventory": 26, "new_listings": 15, "pending_sales": 13, "homes_sold": 14, "price_drops": 0, "median_sale_price": 711500, "median_dom": 17, "pending_ratio": 0.5}, {"period": "2024-12", "inventory": 25, "new_listings": 6, "pending_sales": 6, "homes_sold": 10, "price_drops": 0, "median_sale_price": 782500, "median_dom": 71, "pending_ratio": 0.24}, {"period": "2025-01", "inventory": 24, "new_listings": 13, "pending_sales": 10, "homes_sold": 7, "price_drops": 0, "median_sale_price": 555000, "median_dom": 29, "pending_ratio": 0.4166666666666667}, {"period": "2025-02", "inventory": 24, "new_listings": 9, "pending_sales": 9, "homes_sold": 7, "price_drops": 0, "median_sale_price": 469000, "median_dom": 20, "pending_ratio": 0.375}, {"period": "2025-03", "inventory": 32, "new_listings": 25, "pending_sales": 15, "homes_sold": 13, "price_drops": 0, "median_sale_price": 1032500, "median_dom": 15, "pending_ratio": 0.46875}, {"period": "2025-04", "inventory": 48, "new_listings": 26, "pending_sales": 12, "homes_sold": 8, "price_drops": 0, "median_sale_price": 526000, "median_dom": 6, "pending_ratio": 0.25}, {"period": "2025-05", "inventory": 55, "new_listings": 25, "pending_sales": 14, "homes_sold": 16, "price_drops": 0, "median_sale_price": 697500, "median_dom": 30, "pending_ratio": 0.2545454545454545}, {"period": "2025-06", "inventory": 48, "new_listings": 9, "pending_sales": 13, "homes_sold": 11, "price_drops": 0, "median_sale_price": 879000, "median_dom": 21, "pending_ratio": 0.2708333333333333}, {"period": "2025-07", "inventory": 47, "new_listings": 17, "pending_sales": 18, "homes_sold": 18, "price_drops": 0, "median_sale_price": 749900, "median_dom": 33, "pending_ratio": 0.3829787234042553}, {"period": "2025-08", "inventory": 45, "new_listings": 17, "pending_sales": 19, "homes_sold": 8, "price_drops": 0, "median_sale_price": 672497, "median_dom": 99, "pending_ratio": 0.4222222222222222}, {"period": "2025-09", "inventory": 43, "new_listings": 13, "pending_sales": 10, "homes_sold": 21, "price_drops": 0, "median_sale_price": 625000, "median_dom": 39, "pending_ratio": 0.23255813953488372}]};
+
+        // Load full historical data from JSON file (async, for date range selector)
+        let fullMetroTrends = [];
+        let fullCityTrends = {};
+        const availableCities = ["Blue Ridge", "Boones Mill", "Buchanan", "Cave Spring", "Cloverdale", "Daleville", "Eagle Rock", "Ferrum", "Fincastle", "Glen Wilton", "Glenvar", "Henry Fork", "Hollins", "Laymantown", "New Castle", "North Shore", "Penhook", "Roanoke", "Rocky Mount", "Salem", "Troutville", "Union Hall", "Vinton", "Westlake Corner"];
+
+        // Current date range state
+        let currentRange = '12m';
+        let filteredMetroData = null;
+        let dataLoaded = false;
+
+        // Load full data from JSON file
+        fetch("roanoke_data.json")
+            .then(response => response.json())
+            .then(data => {{
+                fullMetroTrends = data.full_metro_trends || [];
+                fullCityTrends = data.full_city_trends || {};
+                dataLoaded = true;
+                console.log('Full historical data loaded:', fullMetroTrends.length, 'months');
+            }})
+            .catch(error => {{
+                console.error('Error loading full data:', error);
+                // Fallback to 12-month data only
+                dataLoaded = true;
+            }});
+
+        // Format period labels helper
+        function formatLabels(periods) {
+            return periods.map(period => {
+                const [year, month] = period.split('-');
+                const monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                return monthNames[parseInt(month)] + " '" + year.slice(2);
+            });
+        }
+
+        // Filter metro data by date range
+        function filterDataByRange(range) {
+            // If requesting 12-month data and fullMetroTrends not loaded yet, use embedded data
+            if (range === '12m' && fullMetroTrends.length === 0) {
+                return {{
+                    data: null,
+                    label: 'Last 12 Months (Default)',
+                    periods: labels.map((_, i) => {period}-{{'01': i}}), // placeholder
+                    labels: labels,
+                    inventory: inventoryData,
+                    new_listings: newListingsData,
+                    pending_sales: pendingData,
+                    homes_sold: homesSoldData,
+                    price_drops: priceDropsData,
+                    median_dom: domData,
+                    median_sale_price: labels.map(() => 0), // Not in default data
+                    pending_ratio: pendingRatioData
+                }};
+            }}
+
+            // For other ranges, wait for full data to load
+            if (fullMetroTrends.length === 0) {{
+                alert('Please wait for data to load...');
+                return filterDataByRange('12m'); // Fall back to 12-month
+            }}
+
+            const now = new Date('{period}-01');
+            let cutoffDate;
+            let rangeLabel = '';
+
+            if (range === '6m') {{
+                cutoffDate = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+                rangeLabel = 'Last 6 Months';
+            }} else if (range === '12m') {{
+                cutoffDate = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+                rangeLabel = 'Last 12 Months (Default)';
+            }} else if (range === 'ytd') {{
+                cutoffDate = new Date(now.getFullYear(), 0, 1);
+                rangeLabel = 'YTD ' + now.getFullYear();
+            }} else if (range === '2y') {{
+                cutoffDate = new Date(now.getFullYear() - 2, now.getMonth(), 1);
+                rangeLabel = 'Last 2 Years';
+            }} else if (range === '5y') {{
+                cutoffDate = new Date(now.getFullYear() - 5, now.getMonth(), 1);
+                rangeLabel = 'Last 5 Years';
+            }} else if (range === 'all') {{
+                cutoffDate = new Date('2000-01-01');
+                rangeLabel = 'All Time (' + fullMetroTrends.length + ' months)';
+            }}
+
+            const cutoffStr = cutoffDate.toISOString().slice(0, 7);
+            const filtered = fullMetroTrends.filter(t => t.period >= cutoffStr);
+
+            return {{
+                data: filtered,
+                label: rangeLabel,
+                periods: filtered.map(t => t.period),
+                labels: formatLabels(filtered.map(t => t.period)),
+                inventory: filtered.map(t => t.inventory),
+                new_listings: filtered.map(t => t.new_listings),
+                pending_sales: filtered.map(t => t.pending_sales),
+                homes_sold: filtered.map(t => t.homes_sold),
+                price_drops: filtered.map(t => t.price_drops),
+                median_dom: filtered.map(t => t.median_dom),
+                median_sale_price: filtered.map(t => t.median_sale_price),
+                pending_ratio: filtered.map(t => t.pending_ratio || 0)
+            }};
+        }
+
+        // Initialize with 12 month default
+        try {
+            filteredMetroData = filterDataByRange('12m');
+            console.log('Filtered data initialized:', filteredMetroData ? 'SUCCESS' : 'FAILED');
+        } catch (e) {
+            console.error('Error initializing filtered data:', e);
+            alert('Error loading chart data: ' + e.message);
+        }
+
+        // ============= MOVING AVERAGES & TREND LINES =============
+
+        // Calculate Simple Moving Average
+        function calculateSMA(data, period) {
+            const result = [];
+            for (let i = 0; i < data.length; i++) {
+                if (i < period - 1) {
+                    result.push(null);  // Not enough data points yet
+                } else {
+                    let sum = 0;
+                    for (let j = 0; j < period; j++) {
+                        sum += data[i - j] || 0;
+                    }
+                    result.push(sum / period);
+                }
+            }
+            return result;
+        }
+
+        // Calculate linear regression trend line
+        function calculateTrendLine(data) {
+            const n = data.length;
+            let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+
+            for (let i = 0; i < n; i++) {
+                const x = i;
+                const y = data[i] || 0;
+                sumX += x;
+                sumY += y;
+                sumXY += x * y;
+                sumXX += x * x;
+            }
+
+            const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+            const intercept = (sumY - slope * sumX) / n;
+
+            return data.map((_, i) => slope * i + intercept);
+        }
+
+        // Set date range and update all charts
+        function setDateRange(range, clickedButton) {
+            currentRange = range;
+            filteredMetroData = filterDataByRange(range);
+
+            // Update date range display
+            document.getElementById('dateRangeDisplay').textContent = filteredMetroData.label;
+
+            // Update chart titles
+            const suffix = ' (' + filteredMetroData.label + ')';
+            document.getElementById('inventoryChartTitle').textContent = 'Metro Inventory Dynamics' + suffix;
+            document.getElementById('priceDropsChartTitle').textContent = 'Price Reductions' + suffix;
+            document.getElementById('supplyDemandChartTitle').textContent = 'Supply vs Demand Balance' + suffix;
+            document.getElementById('domPendingChartTitle').textContent = 'Days on Market & Pending Ratio' + suffix;
+
+            // Update all charts
+            updateInventoryChart();
+            updatePriceDropsChart();
+            updateSupplyDemandChart();
+            updateDomPendingChart();
+
+            // Update active button styling
+            document.querySelectorAll('button[onclick^="setDateRange"]').forEach(btn => {
+                btn.className = 'px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/50 rounded-lg transition text-sm font-medium';
+            });
+            if (clickedButton) {
+                clickedButton.className = 'px-4 py-2 bg-blue-500/40 border-2 border-blue-500 rounded-lg text-sm font-bold';
+            }
+        }
+
+        // Inventory Chart (Dynamic)
+        let inventoryChart;
+        try {
+            if (!filteredMetroData) {
+                throw new Error('filteredMetroData is not initialized');
+            }
+            inventoryChart = new Chart(document.getElementById('inventoryChart'), {
+                type: 'line',
+                data: {
+                    labels: filteredMetroData.labels,
+                    datasets: [
+                        {
+                            label: 'Active Listings',
+                            data: filteredMetroData.inventory,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'New Listings',
+                            data: filteredMetroData.new_listings,
+                            borderColor: '#10b981',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Pending Sales',
+                            data: filteredMetroData.pending_sales,
+                            borderColor: '#f59e0b',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: chartOptions
+            });
+            console.log('Inventory chart created successfully');
+        } catch (e) {
+            console.error('Error creating inventory chart:', e);
+        }
+
+        // Update inventory chart function
+        function updateInventoryChart() {
+            const value = document.getElementById('inventoryMetric').value;
+            inventoryChart.data.labels = filteredMetroData.labels;
+
+            // Base datasets
+            let datasets = [];
+            if (value === 'all') {
+                datasets = [
+                    { label: 'Active Listings', data: filteredMetroData.inventory, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, tension: 0.4, borderWidth: 2 },
+                    { label: 'New Listings', data: filteredMetroData.new_listings, borderColor: '#10b981', tension: 0.4, borderWidth: 2 },
+                    { label: 'Pending Sales', data: filteredMetroData.pending_sales, borderColor: '#f59e0b', tension: 0.4, borderWidth: 2 }
+                ];
+            } else if (value === 'inventory') {
+                datasets = [
+                    { label: 'Active Listings', data: filteredMetroData.inventory, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, tension: 0.4, borderWidth: 2 }
+                ];
+            } else if (value === 'new_listings') {
+                datasets = [
+                    { label: 'New Listings', data: filteredMetroData.new_listings, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.4, borderWidth: 2 }
+                ];
+            } else if (value === 'pending') {
+                datasets = [
+                    { label: 'Pending Sales', data: filteredMetroData.pending_sales, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: true, tension: 0.4, borderWidth: 2 }
+                ];
+            }
+
+            // Add moving averages if enabled
+            const primaryData = datasets[0].data;
+            if (document.getElementById('showMA3').checked) {
+                datasets.push({
+                    label: '3-Month MA',
+                    data: calculateSMA(primaryData, 3),
+                    borderColor: '#ec4899',
+                    borderDash: [5, 5],
+                    borderWidth: 2,
+                    tension: 0.4,
+                    pointRadius: 0
+                });
+            }
+            if (document.getElementById('showMA6').checked) {
+                datasets.push({
+                    label: '6-Month MA',
+                    data: calculateSMA(primaryData, 6),
+                    borderColor: '#a855f7',
+                    borderDash: [5, 5],
+                    borderWidth: 2,
+                    tension: 0.4,
+                    pointRadius: 0
+                });
+            }
+            if (document.getElementById('showMA12').checked) {
+                datasets.push({
+                    label: '12-Month MA',
+                    data: calculateSMA(primaryData, 12),
+                    borderColor: '#14b8a6',
+                    borderDash: [5, 5],
+                    borderWidth: 2,
+                    tension: 0.4,
+                    pointRadius: 0
+                });
+            }
+            if (document.getElementById('showTrendLine').checked) {
+                datasets.push({
+                    label: 'Trend Line',
+                    data: calculateTrendLine(primaryData),
+                    borderColor: '#fbbf24',
+                    borderDash: [2, 2],
+                    borderWidth: 2,
+                    tension: 0,
+                    pointRadius: 0
+                });
+            }
+
+            inventoryChart.data.datasets = datasets;
+            inventoryChart.update();
+        }
+
+        // Toggle moving averages
+        function toggleMovingAverages() {
+            updateInventoryChart();
+        }
+
+        // Update inventory chart based on dropdown
+        document.getElementById('inventoryMetric').addEventListener('change', updateInventoryChart);
+
+        // Price Drops Chart
+        let priceDropsChart = new Chart(document.getElementById('priceDropsChart'), {
+            type: 'bar',
+            data: {
+                labels: filteredMetroData.labels,
+                datasets: [{
+                    label: 'Price Reductions',
+                    data: filteredMetroData.price_drops,
+                    backgroundColor: '#ef4444'
+                }]
+            },
+            options: chartOptions
+        });
+
+        // Update price drops chart function
+        function updatePriceDropsChart() {
+            priceDropsChart.data.labels = filteredMetroData.labels;
+            priceDropsChart.data.datasets[0].data = filteredMetroData.price_drops;
+            priceDropsChart.update();
+        }
+
+        // Supply vs Demand Chart
+        let supplyDemandChart = new Chart(document.getElementById('supplyDemandChart'), {
+            type: 'line',
+            data: {
+                labels: filteredMetroData.labels,
+                datasets: [
+                    {
+                        label: 'New Listings (Supply)',
+                        data: filteredMetroData.new_listings,
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Homes Sold (Demand)',
+                        data: filteredMetroData.homes_sold,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: chartOptions
+        });
+
+        // Update supply demand chart function
+        function updateSupplyDemandChart() {
+            supplyDemandChart.data.labels = filteredMetroData.labels;
+            supplyDemandChart.data.datasets[0].data = filteredMetroData.new_listings;
+            supplyDemandChart.data.datasets[1].data = filteredMetroData.homes_sold;
+            supplyDemandChart.update();
+        }
+
+        // Combined DOM + Pending Ratio Chart
+        let domPendingChart = new Chart(document.getElementById('domPendingChart'), {
+            type: 'line',
+            data: {
+                labels: filteredMetroData.labels,
+                datasets: [
+                    {
+                        label: 'Days on Market',
+                        data: filteredMetroData.median_dom,
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Pending Ratio',
+                        data: filteredMetroData.pending_ratio,
+                        borderColor: '#f59e0b',
+                        tension: 0.4,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                ...chartOptions,
+                scales: {
+                    y: {
+                        type: 'linear',
+                        position: 'left',
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: '#9ca3af' },
+                        title: { display: true, text: 'Days on Market', color: '#8b5cf6' }
+                    },
+                    y1: {
+                        type: 'linear',
+                        position: 'right',
+                        grid: { display: false },
+                        ticks: { color: '#9ca3af' },
+                        title: { display: true, text: 'Pending Ratio', color: '#f59e0b' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#9ca3af' }
+                    }
+                }
+            }
+        });
+
+        // Update DOM + Pending chart function
+        function updateDomPendingChart() {
+            domPendingChart.data.labels = filteredMetroData.labels;
+            domPendingChart.data.datasets[0].data = filteredMetroData.median_dom;
+            domPendingChart.data.datasets[1].data = filteredMetroData.pending_ratio;
+            domPendingChart.update();
+        }
+
+        // City Chart (Dynamic) - Show ONE metric at a time
+        const firstCity = Object.keys(cityTrends)[0];
+        const cityLabels = cityTrends[firstCity].map(t => {
+            const [year, month] = t.period.split('-');
+            const monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            return monthNames[parseInt(month)] + " '" + year.slice(2);
+        });
+
+        let currentCity = firstCity;
+        let currentMetric = 'inventory';
+
+        function getCityData(city, metric) {
+            if (metric === 'inventory') {
+                return cityTrends[city].map(t => t.inventory);
+            } else if (metric === 'sales') {
+                return cityTrends[city].map(t => t.homes_sold);
+            } else if (metric === 'dom') {
+                return cityTrends[city].map(t => t.median_dom);
+            } else if (metric === 'price') {
+                return cityTrends[city].map(t => t.median_sale_price);
+            }
+        }
+
+        function getMetricLabel(metric) {
+            if (metric === 'inventory') return 'Inventory';
+            if (metric === 'sales') return 'Homes Sold';
+            if (metric === 'dom') return 'Days on Market';
+            if (metric === 'price') return 'Median Sale Price';
+        }
+
+        function getMetricColor(metric) {
+            if (metric === 'inventory') return '#3b82f6';
+            if (metric === 'sales') return '#10b981';
+            if (metric === 'dom') return '#8b5cf6';
+            if (metric === 'price') return '#f59e0b';
+        }
+
+        let cityChart = new Chart(document.getElementById('cityChart'), {
+            type: 'line',
+            data: {
+                labels: cityLabels,
+                datasets: [{
+                    label: getMetricLabel(currentMetric),
+                    data: getCityData(currentCity, currentMetric),
+                    borderColor: getMetricColor(currentMetric),
+                    backgroundColor: getMetricColor(currentMetric) + '20',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: chartOptions
+        });
+
+        // Update city chart when city changes
+        document.getElementById('citySelector').addEventListener('change', function(e) {
+            currentCity = e.target.value;
+            cityChart.data.datasets = [{
+                label: getMetricLabel(currentMetric),
+                data: getCityData(currentCity, currentMetric),
+                borderColor: getMetricColor(currentMetric),
+                backgroundColor: getMetricColor(currentMetric) + '20',
+                fill: true,
+                tension: 0.4
+            }];
+            cityChart.update();
+        });
+
+        // Update city chart when metric changes
+        document.getElementById('cityMetric').addEventListener('change', function(e) {
+            currentMetric = e.target.value;
+            cityChart.data.datasets = [{
+                label: getMetricLabel(currentMetric),
+                data: getCityData(currentCity, currentMetric),
+                borderColor: getMetricColor(currentMetric),
+                backgroundColor: getMetricColor(currentMetric) + '20',
+                fill: true,
+                tension: 0.4
+            }];
+            cityChart.update();
+        });
+
+        // ============= MULTI-CITY COMPARISON TOOL =============
+
+        // Generate distinct colors for cities
+        const cityColors = [
+            '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+            '#ec4899', '#14b8a6', '#f97316', '#06b6d4', '#84cc16',
+            '#a855f7', '#22c55e', '#eab308', '#6366f1', '#f43f5e',
+            '#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'
+        ];
+
+        let selectedCities = [];
+        let multiCityMetric = 'inventory';
+
+        // Generate checkbox list
+        function generateCityCheckboxes() {
+            const container = document.getElementById('cityCheckboxList');
+            container.innerHTML = '';
+
+            availableCities.forEach((city, index) => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center gap-2 p-2 hover:bg-white/5 rounded cursor-pointer';
+                div.innerHTML = `
+                    <input type="checkbox" id="city_$${index}" value="${city}"
+                           class="city-checkbox w-4 h-4 cursor-pointer"
+                           onchange="toggleCity(this)">
+                    <label for="city_$${index}" class="cursor-pointer flex-1 text-sm">${city}</label>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // Toggle city selection
+        function toggleCity(checkbox) {
+            const city = checkbox.value;
+            if (checkbox.checked) {
+                if (selectedCities.length < 10) {
+                    selectedCities.push(city);
+                } else {
+                    checkbox.checked = false;
+                    alert('Maximum 10 cities can be selected for comparison');
+                    return;
+                }
+            } else {
+                selectedCities = selectedCities.filter(c => c !== city);
+            }
+            updateSelectedCitiesList();
+            updateMultiCityChart();
+        }
+
+        // Update selected cities display
+        function updateSelectedCitiesList() {
+            const container = document.getElementById('selectedCitiesList');
+            const count = document.getElementById('selectedCount');
+            count.textContent = selectedCities.length;
+
+            if (selectedCities.length === 0) {
+                container.innerHTML = '<p class="text-gray-500">No cities selected. Use checkboxes to select cities.</p>';
+            } else {
+                container.innerHTML = selectedCities.map((city, i) => {
+                    const color = cityColors[i % cityColors.length];
+                    return `<div class="flex items-center gap-2 mb-1">
+                        <div style="width:12px;height:12px;background:${color};border-radius:2px;"></div>
+                        <span>${city}</span>
+                    </div>`;
+                }).join('');
+            }
+        }
+
+        // Search cities
+        document.getElementById('citySearch').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            document.querySelectorAll('#cityCheckboxList > div').forEach(div => {
+                const label = div.querySelector('label').textContent.toLowerCase();
+                div.style.display = label.includes(searchTerm) ? 'flex' : 'none';
+            });
+        });
+
+        // Get city data for multi-city chart
+        function getMultiCityData(city, metric) {
+            if (!fullCityTrends[city]) return [];
+
+            if (metric === 'inventory') {
+                return fullCityTrends[city].map(t => t.inventory);
+            } else if (metric === 'sales') {
+                return fullCityTrends[city].map(t => t.homes_sold);
+            } else if (metric === 'dom') {
+                return fullCityTrends[city].map(t => t.median_dom);
+            } else if (metric === 'price') {
+                return fullCityTrends[city].map(t => t.median_sale_price);
+            }
+        }
+
+        // Get multi-city labels (use first city's periods)
+        function getMultiCityLabels() {
+            if (selectedCities.length === 0) return [];
+            const firstCity = selectedCities[0];
+            if (!fullCityTrends[firstCity]) return [];
+            return formatLabels(fullCityTrends[firstCity].map(t => t.period));
+        }
+
+        // Multi-city chart
+        let multiCityChart = new Chart(document.getElementById('multiCityChart'), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: []
+            },
+            options: {
+                ...chartOptions,
+                plugins: {
+                    ...chartOptions.plugins,
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: { color: '#e5e7eb', boxWidth: 12 }
+                    }
+                }
+            }
+        });
+
+        // Update multi-city chart
+        function updateMultiCityChart() {
+            if (selectedCities.length === 0) {
+                multiCityChart.data.labels = [];
+                multiCityChart.data.datasets = [];
+                multiCityChart.update();
+                return;
+            }
+
+            const labels = getMultiCityLabels();
+            const datasets = [];
+
+            // Add main city data
+            selectedCities.forEach((city, i) => {
+                const color = cityColors[i % cityColors.length];
+                const cityData = getMultiCityData(city, multiCityMetric);
+
+                datasets.push({
+                    label: city,
+                    data: cityData,
+                    borderColor: color,
+                    backgroundColor: color + '20',
+                    tension: 0.4,
+                    borderWidth: 2
+                });
+
+                // Add moving averages for each city if enabled
+                if (document.getElementById('multiCityMA3').checked) {
+                    datasets.push({
+                        label: city + ' (3-Mo MA)',
+                        data: calculateSMA(cityData, 3),
+                        borderColor: color,
+                        borderDash: [5, 5],
+                        borderWidth: 1,
+                        tension: 0.4,
+                        pointRadius: 0
+                    });
+                }
+                if (document.getElementById('multiCityMA6').checked) {
+                    datasets.push({
+                        label: city + ' (6-Mo MA)',
+                        data: calculateSMA(cityData, 6),
+                        borderColor: color,
+                        borderDash: [8, 4],
+                        borderWidth: 1,
+                        tension: 0.4,
+                        pointRadius: 0
+                    });
+                }
+                if (document.getElementById('multiCityMA12').checked) {
+                    datasets.push({
+                        label: city + ' (12-Mo MA)',
+                        data: calculateSMA(cityData, 12),
+                        borderColor: color,
+                        borderDash: [10, 3],
+                        borderWidth: 1,
+                        tension: 0.4,
+                        pointRadius: 0
+                    });
+                }
+                if (document.getElementById('multiCityTrend').checked) {
+                    datasets.push({
+                        label: city + ' (Trend)',
+                        data: calculateTrendLine(cityData),
+                        borderColor: color,
+                        borderDash: [2, 2],
+                        borderWidth: 1,
+                        tension: 0,
+                        pointRadius: 0
+                    });
+                }
+            });
+
+            multiCityChart.data.labels = labels;
+            multiCityChart.data.datasets = datasets;
+            multiCityChart.update();
+        }
+
+        // Update metric for multi-city chart
+        document.getElementById('multiCityMetric').addEventListener('change', function(e) {
+            multiCityMetric = e.target.value;
+            updateMultiCityChart();
+        });
+
+        // ============= EXPORT FUNCTIONS =============
+
+        // Download chart as PNG image
+        function downloadChartImage(chartId, filename) {
+            const chartElement = document.getElementById(chartId);
+            const url = chartElement.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = filename + '_' + '{period}' + '.png';
+            link.href = url;
+            link.click();
+        }
+
+        // Export chart data to CSV
+        function exportChartCSV(chartId, filename) {{
+            const chart = Chart.getChart(chartId);
+            if (!chart) return;
+
+            const labels = chart.data.labels;
+            const datasets = chart.data.datasets;
+
+            // Build CSV content
+            let csv = 'Period';
+            datasets.forEach(ds => {{
+                csv += ',' + ds.label.replace(/,/g, ' ');
+            }});
+            csv += '\n';
+
+            // Add data rows
+            labels.forEach((label, i) => {{
+                csv += label;
+                datasets.forEach(ds => {{
+                    const value = ds.data[i];
+                    csv += ',' + (value !== null && value !== undefined ? value : '');
+                }});
+                csv += '\n';
+            }});
+
+            // Download CSV file
+            const blob = new Blob([csv], {{ type: 'text/csv' }});
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.download = filename + '_' + '{period}' + '.csv';
+            link.href = url;
+            link.click();
+            URL.revokeObjectURL(url);
+        }}
+
+        // Initialize
+        generateCityCheckboxes();
+    </script>
+</body>
+</html>

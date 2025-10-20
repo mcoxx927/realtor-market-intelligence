@@ -1,0 +1,23 @@
+{
+  "metros": [
+    {
+      "name": "charlotte",
+      "display_name": "Charlotte, NC",
+      "metro_code": "16740",
+      "output_directory": "charlotte",
+      "enabled": true
+    },
+    {
+      "name": "roanoke",
+      "display_name": "Roanoke, VA",
+      "metro_code": "40220",
+      "output_directory": "roanoke",
+      "enabled": true
+    }
+  ],
+  "data_settings": {
+    "property_type_filter": "All Residential",
+    "source_file": "city_market_tracker.tsv000.gz",
+    "output_file_pattern": "{name}_cities_filtered.tsv"
+  }
+}

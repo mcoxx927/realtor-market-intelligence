@@ -1,0 +1,13 @@
+{
+  "report_date": "2025-09-01",
+  "market_name": "Roanoke, VA",
+  "sentiment": "BEARISH",
+  "health_score": 40,
+  "alerts": [],
+  "summary": {
+    "total_alerts": 0,
+    "high_severity": 0,
+    "medium_severity": 0,
+    "low_severity": 0
+  }
+}
