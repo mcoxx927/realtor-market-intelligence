@@ -15,6 +15,14 @@ Automated pipeline for analyzing Redfin city-level market data with AI-powered s
 ### Monthly Workflow
 
 1. **Download latest data from Redfin:**
+New data will be released monthly during the Friday of the third full week of the month
+
+https://redfin-public-data.s3.us-west-2.amazonaws.com/redfin_market_tracker/city_market_tracker.tsv000.gz
+	OR manually
+https://www.redfin.com/news/data-center/
+   - scroll to "Redfin Monthly Housing Market Data"
+    - Click on "city" hyperlink in this section:
+		Download region data here: National, Metro, State, County, City, Zip Code, Neighborhood
    - Get `city_market_tracker.tsv000.gz` from Redfin Data Center
    - Place in project root directory
 
