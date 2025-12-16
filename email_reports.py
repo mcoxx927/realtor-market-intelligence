@@ -22,10 +22,23 @@ from email.mime.base import MIMEBase
 from email import encoders
 from pathlib import Path
 
+try:
+    from dotenv import load_dotenv
+    DOTENV_AVAILABLE = True
+except ImportError:
+    DOTENV_AVAILABLE = False
+
 
 def load_config():
     """Load email configuration from file or environment variables."""
     base_dir = Path(__file__).parent
+
+    # Load .env file if available
+    if DOTENV_AVAILABLE:
+        env_file = base_dir / '.env'
+        if env_file.exists():
+            load_dotenv(env_file)
+
     config_file = base_dir / 'notifications_config.json'
 
     config = {
@@ -38,7 +51,8 @@ def load_config():
         'recipients': [],
         'send_on_success': True,
         'send_on_failure': True,
-        'include_summary_attachment': True
+        'include_summary_attachment': True,
+        'include_dashboard_attachment': True
     }
 
     # Load from config file if exists
@@ -55,7 +69,11 @@ def load_config():
         'SMTP_USER': 'smtp_user',
         'SMTP_PASSWORD': 'smtp_password',
         'EMAIL_FROM': 'from_address',
-        'EMAIL_RECIPIENTS': 'recipients'
+        'EMAIL_RECIPIENTS': 'recipients',
+        'SEND_ON_SUCCESS': 'send_on_success',
+        'SEND_ON_FAILURE': 'send_on_failure',
+        'INCLUDE_SUMMARY_ATTACHMENT': 'include_summary_attachment',
+        'INCLUDE_DASHBOARD_ATTACHMENT': 'include_dashboard_attachment'
     }
 
     for env_var, config_key in env_mappings.items():
@@ -65,6 +83,8 @@ def load_config():
                 config[config_key] = int(env_value)
             elif env_var == 'EMAIL_RECIPIENTS':
                 config[config_key] = [r.strip() for r in env_value.split(',')]
+            elif env_var in ('SEND_ON_SUCCESS', 'SEND_ON_FAILURE', 'INCLUDE_SUMMARY_ATTACHMENT', 'INCLUDE_DASHBOARD_ATTACHMENT'):
+                config[config_key] = env_value.lower() in ('true', '1', 'yes')
             else:
                 config[config_key] = env_value
 
@@ -75,7 +95,7 @@ def load_config():
     return config
 
 
-def generate_email_html(summary, include_ai_narrative=None):
+def generate_email_html(summary, include_ai_narrative=None, dashboard_attached=False):
     """Generate HTML email body from summary JSON."""
     metro = summary.get('metro_name', 'Unknown Metro')
     period = summary.get('report_period', 'Unknown')
@@ -234,10 +254,31 @@ def generate_email_html(summary, include_ai_narrative=None):
     </html>
     '''
 
+    # Add dashboard attachment notice right after header if attached
+    if dashboard_attached:
+        dashboard_notice = '''
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; margin-bottom: 20px; text-align: center;">
+            <div style="font-size: 28px; margin-bottom: 10px;">📊</div>
+            <h3 style="color: white; margin: 0 0 10px 0; font-size: 18px;">Interactive Dashboard Attached!</h3>
+            <p style="color: rgba(255,255,255,0.9); margin: 0; font-size: 14px;">
+                Download the attached HTML file and open it in your browser for:<br>
+                <strong>Interactive charts, city comparisons, trend analysis, and flipper intelligence</strong>
+            </p>
+            <p style="color: rgba(255,255,255,0.7); margin: 10px 0 0 0; font-size: 12px;">
+                (Requires internet connection to load charting libraries)
+            </p>
+        </div>
+        '''
+        # Insert after the header div
+        header_end = html.find('</div>', html.find('Period:'))
+        if header_end != -1:
+            header_end = html.find('</div>', header_end) + 6
+            html = html[:header_end] + dashboard_notice + html[header_end:]
+
     return html
 
 
-def generate_plain_text(summary):
+def generate_plain_text(summary, dashboard_attached=False):
     """Generate plain text version of email."""
     metro = summary.get('metro_name', 'Unknown Metro')
     period = summary.get('report_period', 'Unknown')
@@ -246,10 +287,23 @@ def generate_plain_text(summary):
     metrics = summary.get('key_metrics', {})
     recommendations = summary.get('recommendations', {})
 
+    dashboard_section = ""
+    if dashboard_attached:
+        dashboard_section = """
+*** INTERACTIVE DASHBOARD ATTACHED ***
+Download the attached HTML file and open in your browser for:
+- Interactive charts and graphs
+- City-by-city comparison tools
+- Trend analysis with moving averages
+- Flipper intelligence signals
+(Requires internet connection for charting libraries)
+
+"""
+
     text = f"""
 {metro} Market Report - {period}
 {'='*50}
-
+{dashboard_section}
 MARKET STATUS: {status.replace('_', ' ')}
 Health Score: {health}/100
 
@@ -332,8 +386,16 @@ def send_email(config, subject, html_body, text_body, attachments=None):
         return False
 
 
-def send_market_report(metro_name, summary, config=None, ai_narrative=None):
-    """Send market report email for a specific metro."""
+def send_market_report(metro_name, summary, config=None, ai_narrative=None, output_directory=None):
+    """Send market report email for a specific metro.
+
+    Args:
+        metro_name: Display name for the metro (e.g., "Charlotte, NC")
+        summary: Summary JSON data
+        config: Email configuration dict
+        ai_narrative: Optional AI-generated narrative text
+        output_directory: Folder name where files are stored (e.g., "charlotte")
+    """
     if config is None:
         config = load_config()
 
@@ -342,16 +404,32 @@ def send_market_report(metro_name, summary, config=None, ai_narrative=None):
 
     subject = f"[Market Report] {metro_name} - {period} ({status})"
 
-    html_body = generate_email_html(summary, include_ai_narrative=ai_narrative)
-    text_body = generate_plain_text(summary)
-
     # Prepare attachments
     attachments = []
+    base_dir = Path(__file__).parent
+
+    # Use output_directory if provided, otherwise derive from metro_name
+    if output_directory:
+        metro_folder = output_directory
+    else:
+        metro_folder = metro_name.lower().replace(', ', '_').replace(' ', '_')
+
     if config.get('include_summary_attachment'):
-        base_dir = Path(__file__).parent
-        summary_file = base_dir / metro_name.lower() / period / f"{metro_name.lower()}_summary.json"
+        summary_file = base_dir / metro_folder / period / f"{metro_folder}_summary.json"
         if summary_file.exists():
             attachments.append(str(summary_file))
+
+    # Add interactive dashboard HTML attachment
+    dashboard_attached = False
+    if config.get('include_dashboard_attachment'):
+        dashboard_file = base_dir / metro_folder / period / f"dashboard_enhanced_{metro_folder}_{period}.html"
+        if dashboard_file.exists():
+            attachments.append(str(dashboard_file))
+            dashboard_attached = True
+            print(f"    [+] Dashboard attached: {dashboard_file.name} ({dashboard_file.stat().st_size / 1024 / 1024:.1f} MB)")
+
+    html_body = generate_email_html(summary, include_ai_narrative=ai_narrative, dashboard_attached=dashboard_attached)
+    text_body = generate_plain_text(summary, dashboard_attached=dashboard_attached)
 
     return send_email(config, subject, html_body, text_body, attachments)
 
@@ -510,11 +588,13 @@ def main():
                 ai_narrative = f.read()
 
         print(f"\n[SEND] Sending report for {metro['display_name']}...")
+        output_dir = metro.get('output_directory', metro_name)
         success = send_market_report(
             metro['display_name'],
             summary,
             config=config,
-            ai_narrative=ai_narrative
+            ai_narrative=ai_narrative,
+            output_directory=output_dir
         )
         results.append((metro_name, success))
 

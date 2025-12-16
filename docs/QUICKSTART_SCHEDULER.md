@@ -31,46 +31,66 @@ powershell -ExecutionPolicy Bypass -File setup_task_scheduler.ps1
 5. Click **Generate**
 6. **Copy the 16-character password** (e.g., `abcd efgh ijkl mnop`)
 
-### B. Configure Email Settings
+### B. Configure Email Settings Using .env File
 
-**Option 1: Using Config File (Easier)**
-
-1. Copy the template:
+1. **Copy the template:**
    ```powershell
-   Copy-Item notifications_config.template.json notifications_config.json
+   Copy-Item .env.example .env
    ```
 
-2. Edit `notifications_config.json`:
-   ```json
-   {
-     "email": {
-       "enabled": true,
-       "smtp_host": "smtp.gmail.com",
-       "smtp_port": 587,
-       "smtp_user": "your-email@yourdomain.com",
-       "smtp_password": "abcd efgh ijkl mnop",
-       "from_address": "your-email@yourdomain.com",
-       "recipients": ["recipient@example.com"],
-       "send_on_success": true,
-       "send_on_failure": true
-     }
-   }
+2. **Edit `.env` file** with your credentials:
+   ```env
+   SMTP_HOST=smtp.gmail.com
+   SMTP_PORT=587
+   SMTP_USER=your-email@yourdomain.com
+   SMTP_PASSWORD=abcd efgh ijkl mnop
+   EMAIL_FROM=your-email@yourdomain.com
+   EMAIL_RECIPIENTS=recipient1@example.com,recipient2@example.com,recipient3@example.com
+   SEND_ON_SUCCESS=true
+   SEND_ON_FAILURE=true
+   INCLUDE_SUMMARY_ATTACHMENT=true
    ```
 
-**Option 2: Using Environment Variables (More Secure)**
+3. **For multiple recipients**, separate emails with commas (no spaces after commas is fine):
+   ```env
+   EMAIL_RECIPIENTS=alice@company.com,bob@company.com,charlie@company.com
+   ```
 
+**Alternative: Using notifications_config.json (Legacy Method)**
+
+If you prefer JSON configuration, you can still use `notifications_config.json`:
 ```powershell
-[System.Environment]::SetEnvironmentVariable("SMTP_USER", "your-email@yourdomain.com", "User")
-[System.Environment]::SetEnvironmentVariable("SMTP_PASSWORD", "abcd efgh ijkl mnop", "User")
-[System.Environment]::SetEnvironmentVariable("EMAIL_FROM", "your-email@yourdomain.com", "User")
-[System.Environment]::SetEnvironmentVariable("EMAIL_RECIPIENTS", "recipient@example.com", "User")
+Copy-Item notifications_config.template.json notifications_config.json
 ```
 
-Then in `notifications_config.json`, just set `"enabled": true` and leave passwords blank.
+Then edit the recipients array:
+```json
+{
+  "email": {
+    "enabled": true,
+    "recipients": ["alice@company.com", "bob@company.com", "charlie@company.com"]
+  }
+}
+```
+
+Note: `.env` values take priority over `notifications_config.json` if both exist.
 
 ---
 
-## Step 3: Test Everything (3 minutes)
+## Step 3: Install Dependencies (1 minute)
+
+Install required Python packages:
+```bash
+pip install -r requirements.txt
+```
+
+This installs:
+- `pandas` - for data processing
+- `python-dotenv` - for loading .env configuration
+
+---
+
+## Step 4: Test Everything (3 minutes)
 
 ### Test Email:
 ```bash
@@ -139,18 +159,22 @@ roanoke/2025-XX/
 
 ## Security: Is My Password Safe?
 
-### Config File Method
-- **Reasonably safe** on a local machine you control
+### .env File Method (Recommended)
+- **Reasonably secure** for a personal machine you control
 - Password is in plain text but only accessible to your Windows user account
 - **Already added to .gitignore** so it won't be committed to Git
+- Easy to manage and portable across machines
+- Standard practice in modern development
 
-### Environment Variables Method (Recommended)
-- **More secure** - stored in Windows registry encrypted by your user account
-- Not visible in any files
-- Survives even if you delete the config file
+**Security Best Practices:**
+- The `.env` file is automatically excluded from Git via `.gitignore`
+- File permissions are protected by your Windows user account
+- Use App Passwords instead of your main Google password
+- Never share your `.env` file or commit it to version control
 
 ### Most Secure (Future Enhancement)
 - Windows Credential Manager integration
+- Azure Key Vault or similar secret management
 - Let me know if you want this implemented
 
 ---
@@ -186,6 +210,8 @@ notepad pipeline_runs.log
 ### Email not sending?
 - Verify you're using the **App Password**, not your regular password
 - Check that 2-Factor Authentication is enabled on your Google account
+- Ensure you copied `.env.example` to `.env` and filled in all values
+- Check that `EMAIL_RECIPIENTS` has no spaces after commas
 - Run: `python email_reports.py --test`
 
 ### Task not running when computer was off?
@@ -213,6 +239,9 @@ See **SETUP_GUIDE.md** for comprehensive documentation including:
 ## Quick Commands Reference
 
 ```bash
+# Install dependencies
+pip install -r requirements.txt
+
 # Test email
 python email_reports.py --test
 
