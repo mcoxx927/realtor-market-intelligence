@@ -2078,21 +2078,51 @@ def generate_enhanced_dashboard(data_file: str, output_file: str):
 
     print(f"[OK] Generated: {output_file}")
 
+def find_latest_data_file(metro_dir: Path, metro_name: str) -> tuple:
+    """Find the latest data JSON file for a metro and return (data_file, period)"""
+    # Look for folders matching YYYY-MM pattern
+    import re
+    period_pattern = re.compile(r'^\d{4}-\d{2}$')
+
+    period_folders = [
+        d for d in metro_dir.iterdir()
+        if d.is_dir() and period_pattern.match(d.name)
+    ]
+
+    if not period_folders:
+        raise FileNotFoundError(f"No period folders found in {metro_dir}")
+
+    # Sort by folder name (YYYY-MM format sorts chronologically)
+    latest_folder = sorted(period_folders, key=lambda x: x.name)[-1]
+    data_file = latest_folder / f'{metro_name}_data.json'
+
+    if not data_file.exists():
+        raise FileNotFoundError(f"Data file not found: {data_file}")
+
+    return str(data_file), latest_folder.name
+
+
 def main():
     """Generate dashboards for both metros"""
 
     base_dir = Path(__file__).parent
 
-    # Charlotte
+    # Charlotte - auto-detect latest period
+    charlotte_data_file, charlotte_period = find_latest_data_file(
+        base_dir / 'charlotte', 'charlotte'
+    )
     generate_enhanced_dashboard(
-        data_file=str(base_dir / 'charlotte' / '2025-09' / 'charlotte_data.json'),
-        output_file=str(base_dir / 'charlotte' / '2025-09' / 'dashboard_enhanced_charlotte_2025-09.html')
+        data_file=charlotte_data_file,
+        output_file=str(base_dir / 'charlotte' / charlotte_period / f'dashboard_enhanced_charlotte_{charlotte_period}.html')
     )
 
-    # Roanoke
+    # Roanoke - auto-detect latest period
+    roanoke_data_file, roanoke_period = find_latest_data_file(
+        base_dir / 'roanoke', 'roanoke'
+    )
     generate_enhanced_dashboard(
-        data_file=str(base_dir / 'roanoke' / '2025-09' / 'roanoke_data.json'),
-        output_file=str(base_dir / 'roanoke' / '2025-09' / 'dashboard_enhanced_roanoke_2025-09.html')
+        data_file=roanoke_data_file,
+        output_file=str(base_dir / 'roanoke' / roanoke_period / f'dashboard_enhanced_roanoke_{roanoke_period}.html')
     )
 
     print("\n[OK] All enhanced dashboards generated!")

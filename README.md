@@ -1,6 +1,6 @@
 # Real Estate Market Intelligence Analysis
 
-Automated pipeline for analyzing Redfin city-level market data with AI-powered strategic insights.
+Automated pipeline for analyzing Redfin city-level market data with Python-generated strategic insights.
 
 ## Analysis Overview
 
@@ -34,9 +34,7 @@ https://www.redfin.com/news/data-center/
 3. **Review the outputs:**
    - Enhanced HTML dashboards with interactive charts
    - JSON data files with 12-month historical trends
-
-4. **Invoke the AI agent for strategic analysis:**
-   - The agent will read the JSON files and generate strategic reports
+   - Strategic analysis summaries with market recommendations
 
 ## System Architecture
 
@@ -45,31 +43,32 @@ https://www.redfin.com/news/data-center/
 ```
 city_market_tracker.tsv000.gz (918MB national file)
            ↓
-    extract_metros.py
-    - Reads metro_config.json
-    - Extracts Charlotte, Roanoke, + configurable metros
+[Step 1] extract_metros.py
+           - Reads metro_config.json
+           - Extracts Charlotte, Roanoke, + configurable metros
            ↓
 charlotte_cities_filtered.tsv + roanoke_cities_filtered.tsv
            ↓
-    process_market_data.py
-    - Processes last 12 months of data
-    - Calculates health scores
-    - Identifies top 10 cities
+[Step 2] process_market_data.py
+           - Processes last 12 months of data
+           - Calculates health scores
+           - Identifies top 10 cities
            ↓
 charlotte_data.json + roanoke_data.json
            ↓
-    generate_dashboards_v2.py
-    - Enhanced HTML with interactive charts
-    - Dropdown selectors for metrics
-    - Top 5 city historical trends
+[Step 3] generate_dashboards_v2.py
+           - Enhanced HTML with interactive charts
+           - Dropdown selectors for metrics
+           - Top 5 city historical trends
            ↓
-dashboard_enhanced_[metro]_2025-09.html
+dashboard_enhanced_[metro]_YYYY-MM.html
            ↓
-    AI Agent (Real-Estate-Market-Intelligence-Agent)
-    - Reads JSON files
-    - Generates strategic analysis reports
+[Step 4] extract_summary.py
+           - Classifies markets (BULLISH/NEUTRAL/BEARISH)
+           - Generates seller/buyer/investor recommendations
+           - Identifies alert cities with severity levels
            ↓
-metro_report_[metro]_2025-09.md + city_alerts_[metro]_2025-09.md
+[metro]_summary.json (strategic analysis + recommendations)
 ```
 
 ---
@@ -97,18 +96,26 @@ metro_report_[metro]_2025-09.md + city_alerts_[metro]_2025-09.md
 1. **extract_metros.py** - Extracts metros from raw national TSV file
 2. **process_market_data.py** - Processes TSV into JSON with 12-month trends
 3. **generate_dashboards_v2.py** - Generates enhanced HTML dashboards
-4. **run_market_analysis.py** - Master script that runs all three in sequence
+4. **extract_summary.py** - Generates strategic analysis with recommendations
+5. **run_market_analysis.py** - Master script that runs all four steps in sequence
 
 ### Output Structure
 
 ```
 charlotte/
-├── 2025-09/
-│   ├── charlotte_data.json                          (12-month trends)
-│   ├── dashboard_enhanced_charlotte_2025-09.html    (Interactive charts)
-│   ├── metro_report_charlotte_2025-09.md            (AI strategic analysis)
-│   └── city_alerts_charlotte_2025-09.md             (AI flagged cities)
+└── YYYY-MM/
+    ├── charlotte_data.json                          (12-month trends)
+    ├── dashboard_enhanced_charlotte_YYYY-MM.html    (Interactive charts)
+    └── charlotte_summary.json                       (Strategic analysis + recommendations)
+
+roanoke/
+└── YYYY-MM/
+    ├── roanoke_data.json                            (12-month trends)
+    ├── dashboard_enhanced_roanoke_YYYY-MM.html      (Interactive charts)
+    └── roanoke_summary.json                         (Strategic analysis + recommendations)
 ```
+
+**Note:** YYYY-MM folder is determined dynamically from the data period, not hardcoded.
 
 ---
 
@@ -135,6 +142,37 @@ The generated dashboards include:
 
 **5. Top 10 Cities Table**
 - Current month snapshot with health scores
+
+---
+
+## Strategic Analysis Summary
+
+The `{metro}_summary.json` file contains Python-generated market analysis:
+
+### Market Classification
+- **Market Status:** BULLISH / SLIGHTLY_BULLISH / NEUTRAL / SLIGHTLY_BEARISH / BEARISH
+- **Market Description:** Human-readable summary of market conditions
+- **Health Score:** 0-100 rating of market strength
+
+### City Tiers
+Cities are automatically classified into three market tiers:
+- **HOT Markets:** Strong seller advantage, high demand
+- **BALANCED Markets:** Equilibrium between buyers and sellers
+- **BUYER Markets:** Buyer advantage, excess inventory
+
+### Recommendations by Role
+Strategic guidance provided for:
+- **Sellers:** Pricing strategy and timeline expectations
+- **Buyers:** Negotiating approach and market conditions
+- **Investors:** Strategy focus (appreciation vs. cash flow)
+
+### Alert Cities
+Cities with concerning metrics identified and ranked by severity:
+- **HIGH:** Significant inventory surges, major price declines
+- **MEDIUM:** Emerging issues, requires monitoring
+- **LOW:** Minor concerns, standard approach sufficient
+
+Each alert includes specific recommendations for action.
 
 ---
 
@@ -187,12 +225,12 @@ Dashboards use CDN for TailwindCSS and Chart.js (no local install needed).
 
 **Current Metros Analyzed:**
 - Charlotte-Concord-Gastonia, NC-SC (Metro Code: 16740)
-  - 82 cities analyzed, 2,475 sales (Sep 2025)
+  - 105 cities available, 78 in top 10 analysis, 2,486 sales (Oct 2025)
 
 - Roanoke, VA (Metro Code: 40220)
-  - 17 cities analyzed, 243 sales (Sep 2025)
+  - 24 cities available, 16 in top 10 analysis, 242 sales (Oct 2025)
 
 ---
 
-**Last Updated:** October 19, 2025
-**Pipeline Version:** 2.0 (Enhanced with metro extraction + flexible configuration)
+**Last Updated:** December 15, 2025
+**Pipeline Version:** 2.1 (Dynamic dates + Python-generated strategic analysis)

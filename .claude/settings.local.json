@@ -7,9 +7,11 @@
       "Bash(echo:*)",
       "WebSearch",
       "Bash(start \"\" \"C:\\Users\\1\\Documents\\GitHub\\realtor monthly data analysis\\charlotte\\2025-09\\dashboard_enhanced_charlotte_2025-09.html\")",
-      "Bash(powershell -Command:*)"
+      "Bash(powershell -Command:*)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []
-  }
+  },
+  "outputStyle": "Explanatory"
 }

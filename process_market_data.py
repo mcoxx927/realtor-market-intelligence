@@ -107,7 +107,7 @@ def add_series_derived(trend_rows, fields_for_change):
             row[f'{field}_yoy'] = pct_change(curr_val, prev12_val)
 
 
-def process_metro_data(tsv_file: str, metro_name: str, lookback_months: int = 12) -> dict:
+def process_metro_data(tsv_file: str, metro_name: str, output_dir: Path, lookback_months: int = 12) -> dict:
     """Process TSV file and extract metro-level + city-level historical trends"""
 
     print(f"\nProcessing {metro_name} data from {tsv_file}...")
@@ -305,11 +305,13 @@ def main():
     charlotte_data = process_metro_data(
         tsv_file=str(base_dir / 'charlotte_cities_filtered.tsv'),
         metro_name='Charlotte, NC',
+        output_dir=base_dir / 'charlotte',
         lookback_months=12
     )
 
-    # Save Charlotte JSON
-    output_file = base_dir / 'charlotte' / '2025-09' / 'charlotte_data.json'
+    # Save Charlotte JSON - use period from data for folder name
+    period = charlotte_data['period']
+    output_file = base_dir / 'charlotte' / period / 'charlotte_data.json'
     output_file.parent.mkdir(parents=True, exist_ok=True)
     with open(output_file, 'w') as f:
         json.dump(charlotte_data, f, indent=2)
@@ -319,11 +321,13 @@ def main():
     roanoke_data = process_metro_data(
         tsv_file=str(base_dir / 'roanoke_cities_filtered.tsv'),
         metro_name='Roanoke, VA',
+        output_dir=base_dir / 'roanoke',
         lookback_months=12
     )
 
-    # Save Roanoke JSON
-    output_file = base_dir / 'roanoke' / '2025-09' / 'roanoke_data.json'
+    # Save Roanoke JSON - use period from data for folder name
+    period = roanoke_data['period']
+    output_file = base_dir / 'roanoke' / period / 'roanoke_data.json'
     output_file.parent.mkdir(parents=True, exist_ok=True)
     with open(output_file, 'w') as f:
         json.dump(roanoke_data, f, indent=2)

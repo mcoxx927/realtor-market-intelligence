@@ -1,0 +1,32 @@
+{
+  "email": {
+    "enabled": false,
+    "smtp_host": "smtp.gmail.com",
+    "smtp_port": 587,
+    "smtp_user": "",
+    "smtp_password": "",
+    "from_address": "",
+    "recipients": [],
+    "send_on_success": true,
+    "send_on_failure": true,
+    "include_summary_attachment": true
+  },
+  "ai_narrative": {
+    "enabled": false,
+    "api_key": "",
+    "model": "claude-sonnet-4-20250514",
+    "max_tokens": 2000,
+    "generate_for_all_metros": true
+  },
+  "schedule": {
+    "log_file": "pipeline_runs.log",
+    "max_log_entries": 100,
+    "retry_on_failure": true,
+    "max_retries": 2
+  },
+  "alerts": {
+    "high_severity_immediate": true,
+    "daily_digest": false,
+    "digest_time": "08:00"
+  }
+}

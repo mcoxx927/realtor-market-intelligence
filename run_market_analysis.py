@@ -1,6 +1,8 @@
 """
 Master Automation Script for Real Estate Market Analysis
 Runs the complete pipeline: Metro Extraction -> Data Processing -> Dashboard Generation
+
+For automated/scheduled runs with notifications, use run_scheduled.py instead.
 """
 
 import subprocess
@@ -44,21 +46,27 @@ def main():
     # Step 3: Generate enhanced dashboards
     run_script(str(base_dir / 'generate_dashboards_v2.py'))
 
+    # Step 4: Extract summaries with strategic analysis
+    run_script(str(base_dir / 'extract_summary.py'))
+
     print("\n" + "="*60)
     print("[OK] PIPELINE COMPLETE!")
     print("="*60)
     print("\nExtracted Files:")
     print("  - charlotte_cities_filtered.tsv")
     print("  - roanoke_cities_filtered.tsv")
-    print("\nGenerated Files:")
-    print("  - charlotte/2025-09/charlotte_data.json")
-    print("  - charlotte/2025-09/dashboard_enhanced_charlotte_2025-09.html")
-    print("  - roanoke/2025-09/roanoke_data.json")
-    print("  - roanoke/2025-09/dashboard_enhanced_roanoke_2025-09.html")
+    print("\nGenerated Files (in {metro}/{period}/ folders):")
+    print("  - {metro}_data.json          (full data with 12-month trends)")
+    print("  - dashboard_enhanced_{metro}_{period}.html (interactive dashboard)")
+    print("  - {metro}_summary.json       (strategic analysis + recommendations)")
+    print("\nAdditional Commands:")
+    print("  python fetch_redfin_data.py  - Download latest Redfin data")
+    print("  python ai_narrative.py       - Generate AI market narratives")
+    print("  python email_reports.py      - Send market reports via email")
+    print("  python run_scheduled.py      - Full automated run with notifications")
     print("\nTo add new metros:")
     print("  1. Edit metro_config.json to add new metro definitions")
     print("  2. Re-run this pipeline")
-    print("\nNext: Use the agent to analyze the data and generate reports")
 
 if __name__ == '__main__':
     main()
