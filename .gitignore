@@ -21,6 +21,7 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+nul
 
 # Test files
 test_*.html
@@ -29,3 +30,28 @@ test_*.html
 *.tsv000.gz
 city_market_tracker.tsv000.gz
 county_market_tracker.tsv000.gz
+*.tsv
+
+# Generated monthly analysis outputs (regenerated each pipeline run)
+charlotte/202[0-9]-[0-9][0-9]/
+roanoke/202[0-9]-[0-9][0-9]/
+*_data.json
+*_summary.json
+dashboard_*.html
+*_alerts_*.md
+*_report_*.md
+
+# Temporary marker files
+ANALYSIS_COMPLETE.md
+SETUP_COMPLETE.md
+ENHANCEMENTS_SCRATCHSHEET.md
+
+# Sensitive configuration files (contain passwords/API keys)
+notifications_config.json
+.env
+*.backup_*
+
+# Pipeline logs
+pipeline_runs.log
+task_scheduler.log
+.claude/settings.local.json
