@@ -74,13 +74,6 @@
 - Multiple recipient support
 - Alert-based conditional sending
 
-### [ ] Slack/Discord Integration (Future)
-**Description:** Post alerts to team channels.
-**Planned Features:**
-- Webhook-based notifications
-- Alert severity color coding
-- Interactive message buttons
-
 ---
 
 ## 4. Feature Enhancements (Future)
@@ -90,12 +83,6 @@
 
 ### [ ] 4.2 Price Tier Analysis
 **Description:** Segment by entry-level, mid-market, luxury.
-
-### [ ] 4.3 Investment Calculator
-**Description:** ROI projections based on market data.
-
-### [ ] 4.4 Comparative Metro Analysis
-**Description:** Cross-metro comparison views.
 
 ---
 
@@ -107,8 +94,6 @@
 ### [ ] 5.2 Mobile Responsive Design
 **Description:** CSS breakpoints for mobile viewing.
 
-### [ ] 5.3 Dark Mode Support
-**Description:** Theme toggle for dashboards.
 
 ---
 
@@ -116,9 +101,6 @@
 
 ### [ ] 6.1 Data Validation Pipeline
 **Description:** Automated data quality checks.
-
-### [ ] 6.2 Historical Revision Detection
-**Description:** Detect when Redfin revises historical data.
 
 ### [ ] 6.3 Anomaly Detection
 **Description:** Flag unusual market behavior automatically.
