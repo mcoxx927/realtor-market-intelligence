@@ -44,7 +44,6 @@ dashboard_*.html
 # Temporary marker files
 ANALYSIS_COMPLETE.md
 SETUP_COMPLETE.md
-ENHANCEMENTS_SCRATCHSHEET.md
 
 # Sensitive configuration files (contain passwords/API keys)
 notifications_config.json
