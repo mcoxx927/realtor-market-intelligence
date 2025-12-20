@@ -176,8 +176,16 @@ INSTRUCTIONS:
 4. End with 2-3 specific actionable insights
 
 Keep the tone professional but accessible. Use specific numbers from the data to support your analysis.
+Write in plain text (no Markdown headings, no hash marks, no emojis).
 Do not use bullet points for the main narrative paragraphs - write in flowing prose.
 The actionable insights at the end can be numbered or bulleted.
+Do not invent data or make claims that are not supported by the provided numbers.
+Only name cities that appear in the "Top Cities by Volume" list, and include at least one metric (price, DOM, health score, or YoY) when you name them.
+If you want to reference other submarkets (hot markets, buyer markets, or alerts), describe them generically without naming a city.
+Avoid speculative language (e.g., "below-replacement-cost," "guaranteed," "certain to") and avoid causal claims that are not directly supported by the data.
+Avoid vague adjectives (e.g., "strong," "weak," "robust") unless you cite a concrete metric alongside it.
+Do not include standalone headings or all-caps labels; start immediately with the narrative.
+Introduce the final insights with a short lead-in sentence like "Actionable insights:" in sentence case.
 Total length should be approximately 400-500 words.
 """
 
