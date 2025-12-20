@@ -5,3 +5,6 @@ pandas>=2.0.0
 
 # Email notifications
 python-dotenv>=1.0.0
+
+# AI narratives
+anthropic>=0.45.0

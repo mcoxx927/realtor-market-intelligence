@@ -34,7 +34,7 @@ def load_config():
     config = {
         'enabled': False,
         'api_key': '',
-        'model': 'claude-sonnet-4-20250514',
+        'model': 'claude-opus-4-5-20251101',
         'max_tokens': 2000,
         'generate_for_all_metros': True
     }
@@ -72,7 +72,7 @@ def format_trend_data(trends, metric_name, num_periods=6):
         'total_inventory': ('total_inventory', 'inventory')
     }
 
-    recent = trends[:num_periods]
+    recent = trends[-num_periods:]
     formatted = []
 
     for t in recent:
