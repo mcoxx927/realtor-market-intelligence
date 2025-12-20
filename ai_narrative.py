@@ -63,17 +63,32 @@ def format_trend_data(trends, metric_name, num_periods=6):
     if not trends:
         return "No data available"
 
+    metric_aliases = {
+        'median_sale_price': ('median_sale_price', 'median_price'),
+        'median_price': ('median_price', 'median_sale_price'),
+        'median_dom': ('median_dom', 'avg_dom'),
+        'avg_dom': ('avg_dom', 'median_dom'),
+        'inventory': ('inventory', 'total_inventory'),
+        'total_inventory': ('total_inventory', 'inventory')
+    }
+
     recent = trends[:num_periods]
     formatted = []
 
     for t in recent:
         period = t.get('period', 'Unknown')
-        value = t.get(metric_name)
+        value = None
+        for key in metric_aliases.get(metric_name, (metric_name,)):
+            value = t.get(key)
+            if value is not None:
+                break
 
         if value is not None:
-            if metric_name == 'median_price':
+            if metric_name in ('median_price', 'median_sale_price'):
                 formatted.append(f"{period}: ${value:,.0f}")
-            elif metric_name in ('price_mom', 'price_yoy', 'inventory_yoy'):
+            elif metric_name in ('avg_dom', 'median_dom'):
+                formatted.append(f"{period}: {value:,.0f} days")
+            elif metric_name.endswith(('_mom', '_yoy')):
                 formatted.append(f"{period}: {value*100:+.1f}%")
             else:
                 formatted.append(f"{period}: {value:,.0f}")
@@ -96,9 +111,9 @@ def build_narrative_prompt(summary, metro_trends):
     top_cities = summary.get('top_cities', [])[:5]
 
     # Format trend strings
-    price_trend = format_trend_data(metro_trends, 'median_price')
-    dom_trend = format_trend_data(metro_trends, 'avg_dom')
-    inventory_trend = format_trend_data(metro_trends, 'total_inventory')
+    price_trend = format_trend_data(metro_trends, 'median_sale_price')
+    dom_trend = format_trend_data(metro_trends, 'median_dom')
+    inventory_trend = format_trend_data(metro_trends, 'inventory')
 
     # Format city data
     city_summaries = []

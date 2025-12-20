@@ -14,6 +14,7 @@ import sys
 import shutil
 import hashlib
 from datetime import datetime, timedelta
+from email.utils import parsedate_to_datetime
 from pathlib import Path
 from urllib.request import urlopen, Request
 from urllib.error import URLError, HTTPError
@@ -57,6 +58,20 @@ def is_file_stale(filepath, stale_days=STALE_DAYS):
 
     age = datetime.now() - mod_time
     return age.days >= stale_days
+
+
+def get_remote_last_modified(url):
+    """Fetch remote Last-Modified header as epoch seconds, if available."""
+    try:
+        request = Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}, method='HEAD')
+        with urlopen(request, timeout=30) as response:
+            last_modified = response.headers.get('Last-Modified')
+            if not last_modified:
+                return None
+            return parsedate_to_datetime(last_modified).timestamp()
+    except Exception as e:
+        print(f"[WARN] Could not check remote Last-Modified: {str(e)}")
+        return None
 
 
 def backup_existing_file(filepath):
@@ -173,18 +188,34 @@ def fetch_redfin_data(force=False):
         print(f"       Modified: {mod_time.strftime('%Y-%m-%d %H:%M')}")
         print(f"       Size: {size_mb:.1f} MB")
 
-        if not force and not is_file_stale(output_path):
-            age_days = (datetime.now() - mod_time).days
-            print(f"\n[SKIP] File is only {age_days} days old (threshold: {STALE_DAYS} days)")
-            print("       Use --force to download anyway")
-            result['success'] = True
-            result['downloaded'] = False
-            result['file_size_mb'] = size_mb
-            result['message'] = f"Using existing file ({age_days} days old)"
-            return result
+        if force:
+            print("\n[INFO] Force flag set, downloading fresh copy...")
         else:
-            if force:
-                print("\n[INFO] Force flag set, downloading fresh copy...")
+            remote_mtime = get_remote_last_modified(REDFIN_URL)
+            if remote_mtime is not None:
+                local_mtime = mod_time.timestamp()
+                if remote_mtime <= local_mtime + 60:
+                    age_days = (datetime.now() - mod_time).days
+                    print(f"\n[SKIP] Remote file not newer; existing file is {age_days} days old")
+                    print("       Use --force to download anyway")
+                    result['success'] = True
+                    result['downloaded'] = False
+                    result['file_size_mb'] = size_mb
+                    result['message'] = f"Using existing file ({age_days} days old, remote not newer)"
+                    return result
+
+                remote_dt = datetime.fromtimestamp(remote_mtime)
+                print(f"\n[INFO] Remote file updated: {remote_dt.strftime('%Y-%m-%d %H:%M')}")
+                print("       Downloading fresh copy...")
+            elif not is_file_stale(output_path):
+                age_days = (datetime.now() - mod_time).days
+                print(f"\n[SKIP] File is only {age_days} days old (threshold: {STALE_DAYS} days)")
+                print("       Use --force to download anyway")
+                result['success'] = True
+                result['downloaded'] = False
+                result['file_size_mb'] = size_mb
+                result['message'] = f"Using existing file ({age_days} days old)"
+                return result
             else:
                 age_days = (datetime.now() - mod_time).days
                 print(f"\n[INFO] File is {age_days} days old, downloading fresh copy...")

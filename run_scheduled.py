@@ -326,7 +326,13 @@ def run_scheduled_pipeline(skip_fetch=False, skip_notify=False, skip_ai=False, d
                                             with open(narrative_file, 'r', encoding='utf-8') as f:
                                                 ai_narrative = f.read()
 
-                                        send_market_report(metro_name, summary, email_config, ai_narrative)
+                                        send_market_report(
+                                            metro_name,
+                                            summary,
+                                            email_config,
+                                            ai_narrative,
+                                            output_directory=metro_slug
+                                        )
 
                     log_message("  [OK] Notifications sent", log_file)
                 else:
