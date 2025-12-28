@@ -66,7 +66,7 @@ outputs/YYYY-MM/
 ### Notes
 - Universe configuration lives in `market_radar/roanoke_radar_config.yaml`
 - Seed markets are defined in `market_radar/seeds_roanoke_4hr.csv`
-- Drive-time API support uses OpenRouteService when `ORS_API_KEY` is set; otherwise it falls back to the seed list
+- Drive-time filtering uses the Redfin TSV plus a simple radius approximation; it falls back to the seed list if the TSV is unavailable
 - The radar uses existing per-metro outputs (`{metro}/{period}/{metro}_data.json`) when available,
   and falls back to the extracted TSV files when only the metro extraction step has run.
 - See `market_radar/ROANOKE_MARKET_RADAR.md` for the full drive-shed generation details.

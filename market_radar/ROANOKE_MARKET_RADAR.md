@@ -13,16 +13,16 @@ The Roanoke Market Radar is a lightweight add-on that:
 
 **Primary source:** the Redfin `city_market_tracker.tsv000.gz` file (not committed to the repo).
 
-When `universe_source: "api"` is enabled in `market_radar/roanoke_radar_config.yaml`, the universe
+When `universe_source: "tsv"` is enabled in `market_radar/roanoke_radar_config.yaml`, the universe
 builder does the following:
 
 1. Reads the Redfin TSV to enumerate all metros (name + metro code + lat/lon).  
    This uses the metro-level columns embedded in the city tracker file.
-2. Calls the OpenRouteService isochrone API (`ORS_API_KEY`) to get a 4-hour drive polygon.
-3. Filters the full metro list to those that fall inside the polygon.
+2. Builds a simple 4-hour radius approximation from Roanoke City, VA.
+3. Filters the full metro list to those that fall inside the radius.
 
-**Fallback:** if the Redfin TSV is missing columns or the API key is unavailable, the
-builder falls back to `market_radar/seeds_roanoke_4hr.csv`.
+**Fallback:** if the Redfin TSV is missing columns, the builder falls back to
+`market_radar/seeds_roanoke_4hr.csv`.
 
 ## Running the radar
 
@@ -51,7 +51,6 @@ outputs/YYYY-MM/
 - `market_radar/roanoke_radar_config.yaml` controls:
   - home base location
   - drive time minutes
-  - OpenRouteService API settings
   - target price band and scoring weights
   - paths to the Redfin TSV + pipeline config
 

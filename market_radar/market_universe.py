@@ -7,12 +7,11 @@ Seed list is the default and can be validated later with a drive-time API.
 import argparse
 import csv
 import json
-import os
-import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable, Tuple
 
+import math
 import pandas as pd
 
 
@@ -93,35 +92,6 @@ def _point_in_polygon(point: Tuple[float, float], polygon: Iterable[Tuple[float,
     return inside
 
 
-def _load_isochrone_polygon(endpoint: str, api_key: str, lat: float, lon: float, minutes: int) -> list:
-    payload = json.dumps({
-        "locations": [[lon, lat]],
-        "range": [minutes * 60],
-        "range_type": "time",
-    }).encode("utf-8")
-
-    request = urllib.request.Request(
-        endpoint,
-        data=payload,
-        headers={
-            "Authorization": api_key,
-            "Content-Type": "application/json",
-        },
-        method="POST",
-    )
-
-    with urllib.request.urlopen(request, timeout=30) as response:
-        data = json.loads(response.read().decode("utf-8"))
-
-    features = data.get("features", [])
-    if not features:
-        raise ValueError("Isochrone API response missing features.")
-    coordinates = features[0]["geometry"]["coordinates"]
-    if not coordinates:
-        raise ValueError("Isochrone API response missing polygon coordinates.")
-    return coordinates[0]
-
-
 def _filter_markets_by_isochrone(markets: list, polygon: list) -> list:
     filtered = []
     for market in markets:
@@ -132,6 +102,20 @@ def _filter_markets_by_isochrone(markets: list, polygon: list) -> list:
         if _point_in_polygon((lon, lat), polygon):
             filtered.append(market)
     return filtered
+
+
+def _build_drive_radius_polygon(lat: float, lon: float, minutes: int) -> list:
+    """Approximate a drive-time circle as a polygon using a conservative speed."""
+    miles_per_hour = 55
+    radius_miles = (minutes / 60) * miles_per_hour
+    radius_lat = radius_miles / 69.0
+    radius_lon = radius_miles / (69.0 * max(0.1, math.cos(math.radians(lat))))
+    polygon = []
+    steps = 36
+    for i in range(steps):
+        angle = 2 * math.pi * (i / steps)
+        polygon.append((lon + radius_lon * math.cos(angle), lat + radius_lat * math.sin(angle)))
+    return polygon
 
 
 def _build_universe_from_tsv(tsv_path: Path) -> list:
@@ -174,11 +158,7 @@ def build_universe(config_path: Path, seed_csv: Path, output_path: Path) -> dict
     universe_source = config.get("universe_source", "seeds")
     markets = load_seed_universe(seed_csv)
 
-    if universe_source == "api":
-        api_config = config.get("api", {})
-        env_var = api_config.get("env_var", "ORS_API_KEY")
-        endpoint = api_config.get("endpoint", "")
-        api_key = os.environ.get(env_var)
+    if universe_source == "tsv":
         home_base = config.get("home_base_location", {})
         lat = home_base.get("lat")
         lon = home_base.get("lon")
@@ -189,16 +169,16 @@ def build_universe(config_path: Path, seed_csv: Path, output_path: Path) -> dict
         except (FileNotFoundError, ValueError) as exc:
             print(f"[WARN] {exc}. Falling back to seed list.")
             markets = load_seed_universe(seed_csv)
-
-        if not api_key or not endpoint or lat is None or lon is None:
             universe_source = "seeds_fallback"
-            print("[WARN] Missing API config or key; falling back to seed list.")
         else:
-            polygon = _load_isochrone_polygon(endpoint, api_key, float(lat), float(lon), int(config.get("drive_time_minutes", 240)))
-            markets = _filter_markets_by_isochrone(markets, polygon)
-            for market in markets:
-                market["notes"] = f"Within {config.get('drive_time_minutes', 240)} min isochrone"
-                market["source"] = api_config.get("provider", "api")
+            if lat is not None and lon is not None:
+                polygon = _build_drive_radius_polygon(float(lat), float(lon), int(config.get("drive_time_minutes", 240)))
+                markets = _filter_markets_by_isochrone(markets, polygon)
+                for market in markets:
+                    market["notes"] = f"Within {config.get('drive_time_minutes', 240)} min drive radius (approx)"
+                    market["source"] = "redfin_tsv"
+            else:
+                print("[WARN] Missing home_base_location; using unfiltered TSV universe.")
 
     payload = {
         "home_base": config.get("home_base", "Roanoke City, VA"),
