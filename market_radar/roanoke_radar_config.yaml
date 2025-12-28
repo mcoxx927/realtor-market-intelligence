@@ -1,0 +1,21 @@
+home_base: "Roanoke City, VA"
+drive_time_minutes: 240
+target_price_band:
+  min: 110000
+  max: 260000
+scoring_weights:
+  liquidity: 0.4
+  inventory_pressure: 0.4
+  price_fit: 0.2
+universe_source: "api"
+home_base_location:
+  lat: 37.27097
+  lon: -79.94143
+api:
+  provider: "openrouteservice"
+  env_var: "ORS_API_KEY"
+  endpoint: "https://api.openrouteservice.org/v2/isochrones/driving-car"
+paths:
+  metro_config: "metro_config.json"
+  outputs_dir: "outputs"
+  universe_json: "market_radar/roanoke_4hr_universe.json"

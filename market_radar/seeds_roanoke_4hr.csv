@@ -1,0 +1,11 @@
+market_name,state,preferred_region_type,metro_code,display_name,output_directory,lat,lon,notes,source
+Roanoke,VA,metro,40220,"Roanoke, VA",roanoke,37.27097,-79.94143,Seed list for 4-hour drive shed,manual
+Lynchburg,VA,metro,31340,"Lynchburg, VA",lynchburg,37.41375,-79.14225,Seed list for 4-hour drive shed,manual
+Blacksburg-Christiansburg,VA,metro,13980,"Blacksburg-Christiansburg, VA",blacksburg-christiansburg,37.22960,-80.41390,Seed list for 4-hour drive shed,manual
+Charlottesville,VA,metro,16820,"Charlottesville, VA",charlottesville,38.02930,-78.47670,Seed list for 4-hour drive shed,manual
+Harrisonburg,VA,metro,25500,"Harrisonburg, VA",harrisonburg,38.44960,-78.86890,Seed list for 4-hour drive shed,manual
+Staunton-Waynesboro,VA,metro,44420,"Staunton-Waynesboro, VA",staunton-waynesboro,38.14960,-79.07170,Seed list for 4-hour drive shed,manual
+Richmond,VA,metro,40060,"Richmond, VA",richmond,37.54070,-77.43600,Seed list for 4-hour drive shed,manual
+Greensboro-High Point,NC,metro,24660,"Greensboro-High Point, NC",greensboro-high-point,36.07260,-79.79200,Seed list for 4-hour drive shed,manual
+Winston-Salem,NC,metro,49180,"Winston-Salem, NC",winston-salem,36.09990,-80.24420,Seed list for 4-hour drive shed,manual
+Charlotte-Concord-Gastonia,NC-SC,metro,16740,"Charlotte, NC",charlotte,35.22710,-80.84310,Seed list for 4-hour drive shed,manual

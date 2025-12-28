@@ -36,6 +36,40 @@ https://www.redfin.com/news/data-center/
    - JSON data files with 12-month historical trends
    - Strategic analysis summaries with market recommendations
 
+## Roanoke 4-hour Market Radar (Add-on)
+
+The Market Radar layer builds a 4-hour drive shed market universe, updates `metro_config.json`,
+runs the existing pipeline, and produces a ranked summary artifact.
+
+### Run the monthly radar
+
+```bash
+python market_radar/run_roanoke_radar.py
+```
+
+Optional flags:
+- `--month YYYY-MM` to control the report month in the output filenames
+- `--dry-run` to preview metro_config.json changes without writing
+- `--skip-pipeline` to only build the Market Radar summary from existing outputs
+- `--limit N` to process the first N markets (useful for quick checks)
+
+### Outputs
+
+Market Radar summaries land in:
+
+```
+outputs/YYYY-MM/
+├── Market_Radar_Roanoke_4hr_YYYY-MM.csv
+└── Market_Radar_Roanoke_4hr_YYYY-MM.md
+```
+
+### Notes
+- Universe configuration lives in `market_radar/roanoke_radar_config.yaml`
+- Seed markets are defined in `market_radar/seeds_roanoke_4hr.csv`
+- Drive-time API support uses OpenRouteService when `ORS_API_KEY` is set; otherwise it falls back to the seed list
+- The radar uses existing per-metro outputs (`{metro}/{period}/{metro}_data.json`) when available,
+  and falls back to the extracted TSV files when only the metro extraction step has run.
+
 ## System Architecture
 
 ### Pipeline Components
