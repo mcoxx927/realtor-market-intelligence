@@ -13,6 +13,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable, Tuple
 
+import pandas as pd
+
 
 def _parse_scalar(value: str):
     if value is None:
@@ -132,6 +134,40 @@ def _filter_markets_by_isochrone(markets: list, polygon: list) -> list:
     return filtered
 
 
+def _build_universe_from_tsv(tsv_path: Path) -> list:
+    if not tsv_path.exists():
+        raise FileNotFoundError(f"Source TSV not found: {tsv_path}")
+
+    df = pd.read_csv(tsv_path, sep="\t", low_memory=False)
+    columns = {col.upper(): col for col in df.columns}
+
+    metro_code_col = columns.get("PARENT_METRO_REGION_METRO_CODE")
+    metro_name_col = columns.get("PARENT_METRO_REGION")
+    lat_col = columns.get("PARENT_METRO_REGION_LATITUDE") or columns.get("PARENT_METRO_LATITUDE")
+    lon_col = columns.get("PARENT_METRO_REGION_LONGITUDE") or columns.get("PARENT_METRO_LONGITUDE")
+
+    if not metro_code_col or not metro_name_col or not lat_col or not lon_col:
+        raise ValueError("TSV missing metro name/code/lat/lon columns for universe generation.")
+
+    subset = df[[metro_code_col, metro_name_col, lat_col, lon_col]].dropna().drop_duplicates()
+    markets = []
+    for _, row in subset.iterrows():
+        metro_name = str(row[metro_name_col]).strip()
+        markets.append({
+            "market_name": metro_name,
+            "state": "",
+            "preferred_region_type": "metro",
+            "metro_code": str(row[metro_code_col]).strip(),
+            "display_name": metro_name,
+            "output_directory": metro_name.lower().replace(",", "").replace(" ", "-"),
+            "lat": _parse_scalar(str(row[lat_col])),
+            "lon": _parse_scalar(str(row[lon_col])),
+            "notes": "Derived from Redfin metro columns",
+            "source": "redfin_tsv",
+        })
+    return markets
+
+
 def build_universe(config_path: Path, seed_csv: Path, output_path: Path) -> dict:
     """Build and write the universe JSON file."""
     config = load_simple_yaml(config_path)
@@ -146,6 +182,13 @@ def build_universe(config_path: Path, seed_csv: Path, output_path: Path) -> dict
         home_base = config.get("home_base_location", {})
         lat = home_base.get("lat")
         lon = home_base.get("lon")
+        tsv_path = Path(config.get("paths", {}).get("source_file", "city_market_tracker.tsv000.gz"))
+
+        try:
+            markets = _build_universe_from_tsv(tsv_path)
+        except (FileNotFoundError, ValueError) as exc:
+            print(f"[WARN] {exc}. Falling back to seed list.")
+            markets = load_seed_universe(seed_csv)
 
         if not api_key or not endpoint or lat is None or lon is None:
             universe_source = "seeds_fallback"

@@ -17,5 +17,6 @@ api:
   endpoint: "https://api.openrouteservice.org/v2/isochrones/driving-car"
 paths:
   metro_config: "metro_config.json"
+  source_file: "city_market_tracker.tsv000.gz"
   outputs_dir: "outputs"
   universe_json: "market_radar/roanoke_4hr_universe.json"

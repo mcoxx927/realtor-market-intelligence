@@ -69,6 +69,7 @@ outputs/YYYY-MM/
 - Drive-time API support uses OpenRouteService when `ORS_API_KEY` is set; otherwise it falls back to the seed list
 - The radar uses existing per-metro outputs (`{metro}/{period}/{metro}_data.json`) when available,
   and falls back to the extracted TSV files when only the metro extraction step has run.
+- See `market_radar/ROANOKE_MARKET_RADAR.md` for the full drive-shed generation details.
 
 ## System Architecture
 
