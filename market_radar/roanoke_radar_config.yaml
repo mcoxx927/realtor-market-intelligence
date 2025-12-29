@@ -1,18 +1,19 @@
+# Roanoke 4-hour Market Radar Configuration
 home_base: "Roanoke City, VA"
-drive_time_minutes: 240
+
+# Scoring parameters
 target_price_band:
   min: 110000
-  max: 260000
+  max: 3000000
 scoring_weights:
-  liquidity: 0.4
-  inventory_pressure: 0.4
-  price_fit: 0.2
-universe_source: "tsv"
-home_base_location:
-  lat: 37.27097
-  lon: -79.94143
+  health: 0.55       # Market health (pending sales, DOM, months of supply, price trends)
+  liquidity: 0.15    # Transaction volume (with floor threshold - 50+ homes/month = full points)
+  price_fit: 0.30    # Is price in your target investment band?
+
+# Liquidity floor: markets with >= this many homes sold/month get full liquidity points
+liquidity_floor: 50
+
+# File paths
 paths:
-  metro_config: "metro_config.json"
   source_file: "city_market_tracker.tsv000.gz"
-  outputs_dir: "outputs"
-  universe_json: "market_radar/roanoke_4hr_universe.json"
+  outputs_dir: "market_radar/outputs"

@@ -28,44 +28,58 @@ def safe_int(value):
         return None
 
 def calculate_health_score(row):
-    """Calculate health score (0-100) based on market fundamentals"""
+    """
+    Calculate health score (0-100) based on market velocity/absorption.
+
+    Components (redistributed - price excluded for investor focus):
+    - Pending sales YOY (34 pts) - demand indicator
+    - DOM velocity + absolute (33 pts) - market speed
+    - Months of supply (33 pts) - inventory absorption
+
+    Price YoY excluded - for investors, price decline can be opportunity.
+    """
     score = 0
 
-    # Pending sales strength (25 pts)
+    # Pending sales strength (34 pts)
     pending_yoy = safe_float(row.get('PENDING_SALES_YOY'))
     if pending_yoy and pending_yoy > 0.10:
-        score += 25
+        score += 34
     elif pending_yoy and pending_yoy > 0:
-        score += 15
+        score += 20
     else:
-        score += 5
+        score += 7
 
-    # Velocity - DOM YoY (25 pts)
+    # Velocity - DOM (33 pts) - considers BOTH trend AND absolute value
     dom_yoy = safe_float(row.get('MEDIAN_DOM_YOY'))
-    if dom_yoy and dom_yoy < 0:  # Faster is better
-        score += 25
-    elif dom_yoy and dom_yoy < 0.10:
-        score += 15
-    else:
-        score += 5
+    dom_abs = safe_int(row.get('MEDIAN_DOM'))
 
-    # Inventory balance (25 pts)
+    # Start with YoY-based score
+    if dom_yoy and dom_yoy < 0:  # Faster is better
+        dom_score = 33
+    elif dom_yoy and dom_yoy < 0.10:
+        dom_score = 20
+    else:
+        dom_score = 7
+
+    # Apply absolute DOM penalty - high DOM is always bad
+    if dom_abs is not None:
+        if dom_abs > 90:
+            dom_score = min(dom_score, 0)   # Very slow market
+        elif dom_abs > 70:
+            dom_score = min(dom_score, 7)   # Slow market
+        elif dom_abs > 50:
+            dom_score = min(dom_score, 20)  # Moderate
+
+    score += dom_score
+
+    # Inventory balance - Months of Supply (33 pts)
     mos = safe_float(row.get('MONTHS_OF_SUPPLY'))
     if mos and mos < 3:
-        score += 25
+        score += 33
     elif mos and mos < 6:
-        score += 15
+        score += 20
     else:
-        score += 5
-
-    # Price momentum (25 pts)
-    price_yoy = safe_float(row.get('MEDIAN_SALE_PRICE_YOY'))
-    if price_yoy and price_yoy > 0.05:
-        score += 25
-    elif price_yoy and price_yoy > 0:
-        score += 15
-    else:
-        score += 5
+        score += 7
 
     return min(score, 100)
 

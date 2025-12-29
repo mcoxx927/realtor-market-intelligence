@@ -34,29 +34,44 @@ city_market_tracker.tsv000.gz (Redfin national data)
     -> extract_metros.py (reads metro_config.json)
     -> {metro}_cities_filtered.tsv
     -> process_market_data.py
-    -> {metro}/YYYY-MM/{metro}_data.json
+    -> core_markets/{metro}/YYYY-MM/{metro}_data.json
     -> generate_dashboards_v2.py
-    -> {metro}/YYYY-MM/dashboard_enhanced_{metro}_YYYY-MM.html
+    -> core_markets/{metro}/YYYY-MM/dashboard_enhanced_{metro}_YYYY-MM.html
     -> extract_summary.py
-    -> {metro}/YYYY-MM/{metro}_summary.json (strategic analysis)
+    -> core_markets/{metro}/YYYY-MM/{metro}_summary.json (strategic analysis)
 ```
 
 Note: YYYY-MM folder is determined dynamically from the data period, not hardcoded.
 
 ### Configuration
 
-**metro_config.json** - Add/modify metros by editing this file (no code changes needed):
+**metro_config.json** - Core markets only (Charlotte, Roanoke):
 - `name`: internal identifier
 - `metro_code`: Redfin PARENT_METRO_REGION_METRO_CODE
+- `output_directory`: path under core_markets/
 - `enabled`: boolean to include/exclude
+
+**market_radar/** - Separate research tool for exploring markets in a 4-hour radius.
+Uses its own `radar_metro_config.json` and outputs to `market_radar/outputs/`.
+See `market_radar/ROANOKE_MARKET_RADAR.md` for details.
 
 ### Output Structure
 ```
-{metro}/
-└── YYYY-MM/
-    ├── {metro}_data.json                        # Full data with 12-month trends
-    ├── dashboard_enhanced_{metro}_YYYY-MM.html  # Interactive charts
-    └── {metro}_summary.json                     # Strategic analysis (see below)
+core_markets/                    # Core market analysis
+├── charlotte/
+│   └── YYYY-MM/
+│       ├── charlotte_data.json
+│       ├── dashboard_enhanced_charlotte_YYYY-MM.html
+│       └── charlotte_summary.json
+└── roanoke/
+    └── YYYY-MM/
+        └── ...
+
+market_radar/                    # Research markets (separate)
+└── outputs/
+    └── YYYY-MM/
+        ├── Market_Radar_Roanoke_4hr_YYYY-MM.csv
+        └── Market_Radar_Roanoke_4hr_YYYY-MM.md
 ```
 
 ## Summary JSON Structure

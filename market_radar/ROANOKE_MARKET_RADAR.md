@@ -2,57 +2,62 @@
 
 ## What it does
 
-The Roanoke Market Radar is a lightweight add-on that:
+Analyzes markets from your seed list and produces a ranked "dealability" report.
 
-1. Builds a candidate universe of markets within ~4 hours of Roanoke City, VA.
-2. Updates `metro_config.json` with that universe.
-3. Runs the existing pipeline (`run_market_analysis.py`).
-4. Produces a ranked Market Radar summary.
+**Simple flow:**
+1. Read markets from `seeds_roanoke_4hr.csv`
+2. Pull metrics directly from master Redfin TSV
+3. Score and rank by dealability
+4. Output CSV and Markdown reports
 
-## Universe generation (4-hour drive shed)
+## Files
 
-**Primary source:** the Redfin `city_market_tracker.tsv000.gz` file (not committed to the repo).
+```
+market_radar/
++-- seeds_roanoke_4hr.csv      # Your markets (edit this!)
++-- roanoke_radar_config.yaml  # Scoring weights, price band
++-- run_roanoke_radar.py       # Runner script
++-- radar_summary.py           # Core logic
++-- build_seed_from_tsv.py     # Utility to refresh seed list (yearly)
++-- outputs/
+    +-- YYYY-MM/
+        +-- Market_Radar_Roanoke_4hr_YYYY-MM.csv
+        +-- Market_Radar_Roanoke_4hr_YYYY-MM.md
+```
 
-When `universe_source: "tsv"` is enabled in `market_radar/roanoke_radar_config.yaml`, the universe
-builder does the following:
-
-1. Reads the Redfin TSV to enumerate all metros (name + metro code + lat/lon).  
-   This uses the metro-level columns embedded in the city tracker file.
-2. Builds a simple 4-hour radius approximation from Roanoke City, VA.
-3. Filters the full metro list to those that fall inside the radius.
-
-**Fallback:** if the Redfin TSV is missing columns, the builder falls back to
-`market_radar/seeds_roanoke_4hr.csv`.
-
-## Running the radar
+## Usage
 
 ```bash
+# Run the radar (uses all markets in seed CSV)
 python market_radar/run_roanoke_radar.py
+
+# Quick test with 5 markets
+python market_radar/run_roanoke_radar.py --limit 5
+
+# Specific month
+python market_radar/run_roanoke_radar.py --month 2025-01
 ```
 
-Useful flags:
-- `--month YYYY-MM` for output file naming
-- `--dry-run` to preview config updates without writing
-- `--skip-pipeline` to build the radar summary from existing outputs
-- `--limit N` for quick local tests
+## Adding/Removing Markets
 
-## Outputs
+Edit `seeds_roanoke_4hr.csv` directly. Required columns:
+- `metro_code` - Redfin metro code (required)
+- `market_name` - Display name
+- `state` - State abbreviation
+- `display_name` - Full name for reports
 
-Generated outputs land in:
+The `lat`, `lon` columns are optional (kept for reference).
 
-```
-outputs/YYYY-MM/
-├── Market_Radar_Roanoke_4hr_YYYY-MM.csv
-└── Market_Radar_Roanoke_4hr_YYYY-MM.md
+## Refreshing the Seed List
+
+Run yearly to pick up any new metros in Redfin data:
+
+```bash
+python market_radar/build_seed_from_tsv.py --merge-existing market_radar/seeds_roanoke_4hr.csv
 ```
 
 ## Configuration
 
-- `market_radar/roanoke_radar_config.yaml` controls:
-  - home base location
-  - drive time minutes
-  - target price band and scoring weights
-  - paths to the Redfin TSV + pipeline config
-
-- `market_radar/seeds_roanoke_4hr.csv` provides a seed list with lat/lon coordinates
-  for fallback operation.
+Edit `roanoke_radar_config.yaml`:
+- `target_price_band` - min/max price range for scoring
+- `scoring_weights` - weight for liquidity, inventory pressure, price fit
