@@ -4,14 +4,14 @@
       "name": "charlotte",
       "display_name": "Charlotte, NC",
       "metro_code": "16740",
-      "output_directory": "charlotte",
+      "output_directory": "core_markets/charlotte",
       "enabled": true
     },
     {
       "name": "roanoke",
       "display_name": "Roanoke, VA",
       "metro_code": "40220",
-      "output_directory": "roanoke",
+      "output_directory": "core_markets/roanoke",
       "enabled": true
     }
   ],
