@@ -55,3 +55,4 @@ pipeline_runs.log
 task_scheduler.log
 .claude/settings.local.json
 *api_key.txt
+/.venv
