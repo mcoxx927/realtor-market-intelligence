@@ -3,9 +3,14 @@ Extract summary data from JSON files with strategic analysis
 Replaces AI agent analysis with Python-generated insights
 """
 import json
-import os
 import re
 from pathlib import Path
+
+
+def load_metro_config(config_path: Path) -> dict:
+    """Load metro configuration from JSON file."""
+    with open(config_path, 'r') as f:
+        return json.load(f)
 
 
 def find_latest_data_file(metro_dir: str, metro_name: str) -> tuple:
@@ -214,41 +219,49 @@ def extract_metro_summary(json_path: str) -> dict:
 
 
 def main():
-    base_dir = os.path.dirname(os.path.abspath(__file__))
+    base_dir = Path(__file__).parent
+    config_file = base_dir / 'metro_config.json'
+    if not config_file.exists():
+        raise FileNotFoundError("metro_config.json not found")
 
-    # Charlotte - auto-detect latest period
-    charlotte_json, charlotte_period = find_latest_data_file(
-        os.path.join(base_dir, 'charlotte'), 'charlotte'
-    )
-    charlotte_summary = extract_metro_summary(charlotte_json)
+    config = load_metro_config(config_file)
+    metros = [m for m in config.get('metros', []) if m.get('enabled', True)]
+    if not metros:
+        raise ValueError("No enabled metros found in metro_config.json")
 
-    charlotte_output = os.path.join(base_dir, 'charlotte', charlotte_period, 'charlotte_summary.json')
-    with open(charlotte_output, 'w') as f:
-        json.dump(charlotte_summary, f, indent=2)
-    print(f"[OK] Charlotte summary: {charlotte_output}")
+    summaries = []
 
-    # Roanoke - auto-detect latest period
-    roanoke_json, roanoke_period = find_latest_data_file(
-        os.path.join(base_dir, 'roanoke'), 'roanoke'
-    )
-    roanoke_summary = extract_metro_summary(roanoke_json)
+    for metro in metros:
+        metro_slug = metro.get('name')
+        metro_display = metro.get('display_name', metro_slug)
+        if not metro_slug:
+            raise ValueError("Metro config entry missing required field: name")
 
-    roanoke_output = os.path.join(base_dir, 'roanoke', roanoke_period, 'roanoke_summary.json')
-    with open(roanoke_output, 'w') as f:
-        json.dump(roanoke_summary, f, indent=2)
-    print(f"[OK] Roanoke summary: {roanoke_output}")
+        metro_output_dir = base_dir / metro.get('output_directory', metro_slug)
+        metro_json, period = find_latest_data_file(str(metro_output_dir), metro_slug)
+        metro_summary = extract_metro_summary(metro_json)
 
-    # Print quick comparison
+        summary_output = metro_output_dir / period / f'{metro_slug}_summary.json'
+        with open(summary_output, 'w') as f:
+            json.dump(metro_summary, f, indent=2)
+        print(f"[OK] {metro_display} summary: {summary_output}")
+
+        summaries.append((metro_display, metro_summary))
+
     print(f"\n{'='*60}")
-    print("METRO COMPARISON")
+    print("METRO SUMMARY SNAPSHOT")
     print('='*60)
-    print(f"\n{'Metric':<25} {'Charlotte':<20} {'Roanoke':<20}")
-    print('-'*65)
-    print(f"{'Health Score':<25} {charlotte_summary['metro_health_score']}/100{'':<14} {roanoke_summary['metro_health_score']}/100")
-    print(f"{'Market Status':<25} {charlotte_summary['market_status']:<20} {roanoke_summary['market_status']:<20}")
-    print(f"{'Avg DOM':<25} {charlotte_summary['key_metrics']['weighted_avg_dom']} days{'':<14} {roanoke_summary['key_metrics']['weighted_avg_dom']} days")
-    print(f"{'Avg Price':<25} ${charlotte_summary['key_metrics']['weighted_avg_price']:,}{'':<10} ${roanoke_summary['key_metrics']['weighted_avg_price']:,}")
-    print(f"{'Alert Cities':<25} {len(charlotte_summary['alert_cities']):<20} {len(roanoke_summary['alert_cities']):<20}")
+    for metro_display, summary in summaries:
+        metrics = summary.get('key_metrics', {})
+        print(
+            f"{metro_display}: "
+            f"period={summary.get('report_period', 'N/A')}, "
+            f"health={summary.get('metro_health_score', 'N/A')}/100, "
+            f"status={summary.get('market_status', 'N/A')}, "
+            f"avg_dom={metrics.get('weighted_avg_dom', 'N/A')} days, "
+            f"avg_price=${metrics.get('weighted_avg_price', 0):,}, "
+            f"alerts={len(summary.get('alert_cities', []))}"
+        )
 
 
 if __name__ == '__main__':

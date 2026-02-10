@@ -134,6 +134,33 @@ def get_processed_metros(base_dir):
     return [m['display_name'] for m in metro_config.get('metros', []) if m.get('enabled', True)]
 
 
+def get_enabled_metro_configs(base_dir):
+    """Get enabled metro configs with normalized fields for downstream steps."""
+    metro_config_file = base_dir / 'metro_config.json'
+    if not metro_config_file.exists():
+        return []
+
+    with open(metro_config_file, 'r') as f:
+        metro_config = json.load(f)
+
+    normalized = []
+    for metro in metro_config.get('metros', []):
+        if not metro.get('enabled', True):
+            continue
+
+        metro_name = metro.get('name')
+        if not metro_name:
+            continue
+
+        normalized.append({
+            'name': metro_name,
+            'display_name': metro.get('display_name', metro_name),
+            'output_directory': metro.get('output_directory', metro_name)
+        })
+
+    return normalized
+
+
 def run_scheduled_pipeline(skip_fetch=False, skip_notify=False, skip_ai=False, dry_run=False):
     """
     Run the complete scheduled pipeline.
@@ -150,6 +177,7 @@ def run_scheduled_pipeline(skip_fetch=False, skip_notify=False, skip_ai=False, d
     base_dir = Path(__file__).parent
     config = load_schedule_config()
     log_file = str(base_dir / config['log_file'])
+    metro_configs = get_enabled_metro_configs(base_dir)
 
     results = {
         'success': False,
@@ -235,7 +263,7 @@ def run_scheduled_pipeline(skip_fetch=False, skip_notify=False, skip_ai=False, d
             raise Exception("Summary extraction failed")
 
         # Get list of processed metros
-        results['metros_processed'] = get_processed_metros(base_dir)
+        results['metros_processed'] = [m['display_name'] for m in metro_configs]
 
         # Optional: AI Narrative Generation
         if not skip_ai:
@@ -296,43 +324,74 @@ def run_scheduled_pipeline(skip_fetch=False, skip_notify=False, skip_ai=False, d
                     if results['success']:
                         log_message("  Sending market reports...", log_file)
                         import re
-                        for metro_name in results['metros_processed']:
-                            # Find summary for this metro
-                            metro_slug = metro_name.split(',')[0].lower().replace(' ', '_')
-                            if 'charlotte' in metro_slug:
-                                metro_slug = 'charlotte'
-                            elif 'roanoke' in metro_slug:
-                                metro_slug = 'roanoke'
+                        period_pattern = re.compile(r'^\d{4}-\d{2}$')
+                        sent_reports = 0
+                        failed_reports = 0
+                        skipped_reports = 0
 
-                            metro_dir = base_dir / metro_slug
-                            if metro_dir.exists():
-                                period_pattern = re.compile(r'^\d{4}-\d{2}$')
-                                period_folders = sorted([
-                                    d for d in metro_dir.iterdir()
-                                    if d.is_dir() and period_pattern.match(d.name)
-                                ], reverse=True)
+                        for metro in metro_configs:
+                            metro_slug = metro['name']
+                            metro_display_name = metro['display_name']
+                            output_directory = metro['output_directory']
+                            metro_dir = base_dir / output_directory
 
-                                if period_folders:
-                                    summary_file = period_folders[0] / f"{metro_slug}_summary.json"
-                                    narrative_file = period_folders[0] / f"{metro_slug}_narrative.txt"
+                            if not metro_dir.exists():
+                                log_message(f"  [SKIP] Metro output directory not found for {metro_display_name}: {metro_dir}", log_file)
+                                skipped_reports += 1
+                                continue
 
-                                    if summary_file.exists():
-                                        with open(summary_file, 'r') as f:
-                                            summary = json.load(f)
+                            period_folders = sorted([
+                                d for d in metro_dir.iterdir()
+                                if d.is_dir() and period_pattern.match(d.name)
+                            ], reverse=True)
 
-                                        # Load AI narrative if available
-                                        ai_narrative = None
-                                        if narrative_file.exists():
-                                            with open(narrative_file, 'r', encoding='utf-8') as f:
-                                                ai_narrative = f.read()
+                            if not period_folders:
+                                log_message(f"  [SKIP] No period folders found for {metro_display_name} in {metro_dir}", log_file)
+                                skipped_reports += 1
+                                continue
 
-                                        send_market_report(
-                                            metro_name,
-                                            summary,
-                                            email_config,
-                                            ai_narrative,
-                                            output_directory=metro_slug
-                                        )
+                            latest_folder = period_folders[0]
+                            summary_file = latest_folder / f"{metro_slug}_summary.json"
+                            narrative_file = latest_folder / f"{metro_slug}_narrative.txt"
+
+                            if not summary_file.exists():
+                                log_message(f"  [SKIP] Summary file not found for {metro_display_name}: {summary_file}", log_file)
+                                skipped_reports += 1
+                                continue
+
+                            try:
+                                with open(summary_file, 'r') as f:
+                                    summary = json.load(f)
+
+                                # Load AI narrative if available
+                                ai_narrative = None
+                                if narrative_file.exists():
+                                    with open(narrative_file, 'r', encoding='utf-8') as f:
+                                        ai_narrative = f.read()
+
+                                report_sent = send_market_report(
+                                    metro_display_name,
+                                    summary,
+                                    email_config,
+                                    ai_narrative,
+                                    output_directory=output_directory
+                                )
+                            except Exception as metro_error:
+                                log_message(f"  [FAILED] Report send errored for {metro_display_name}: {metro_error}", log_file)
+                                failed_reports += 1
+                                continue
+
+                            if report_sent:
+                                log_message(f"  [OK] Market report sent for {metro_display_name}", log_file)
+                                sent_reports += 1
+                            else:
+                                log_message(f"  [FAILED] Market report email failed for {metro_display_name}", log_file)
+                                failed_reports += 1
+
+                        log_message(
+                            f"  Market report summary: sent={sent_reports}, failed={failed_reports}, skipped={skipped_reports}",
+                            log_file
+                        )
 
                     log_message("  [OK] Notifications sent", log_file)
                 else:

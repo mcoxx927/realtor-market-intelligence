@@ -8,6 +8,13 @@ import pandas as pd
 import json
 from pathlib import Path
 from datetime import datetime
+import sys
+
+
+def load_metro_config(config_path: Path) -> dict:
+    """Load metro configuration from JSON file."""
+    with open(config_path, 'r') as f:
+        return json.load(f)
 
 def safe_float(value):
     """Convert value to float, handling 'N/A' strings"""
@@ -311,49 +318,80 @@ def process_metro_data(tsv_file: str, metro_name: str, output_dir: Path, lookbac
     }
 
 def main():
-    """Process both Charlotte and Roanoke data"""
+    """Process enabled metros from metro_config.json."""
 
     base_dir = Path(__file__).parent
+    config_file = base_dir / 'metro_config.json'
+    if not config_file.exists():
+        print("[ERROR] metro_config.json not found")
+        sys.exit(1)
 
-    # Process Charlotte
-    charlotte_data = process_metro_data(
-        tsv_file=str(base_dir / 'charlotte_cities_filtered.tsv'),
-        metro_name='Charlotte, NC',
-        output_dir=base_dir / 'charlotte',
-        lookback_months=12
-    )
+    config = load_metro_config(config_file)
+    data_settings = config.get('data_settings', {})
+    input_pattern = data_settings.get('output_file_pattern', '{name}_cities_filtered.tsv')
+    enabled_metros = [m for m in config.get('metros', []) if m.get('enabled', True)]
 
-    # Save Charlotte JSON - use period from data for folder name
-    period = charlotte_data['period']
-    output_file = base_dir / 'charlotte' / period / 'charlotte_data.json'
-    output_file.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_file, 'w') as f:
-        json.dump(charlotte_data, f, indent=2)
-    print(f"\n[OK] Saved: {output_file}")
+    if not enabled_metros:
+        print("[ERROR] No enabled metros found in metro_config.json")
+        sys.exit(1)
 
-    # Process Roanoke
-    roanoke_data = process_metro_data(
-        tsv_file=str(base_dir / 'roanoke_cities_filtered.tsv'),
-        metro_name='Roanoke, VA',
-        output_dir=base_dir / 'roanoke',
-        lookback_months=12
-    )
+    processed_results = []
+    failed_metros = []
 
-    # Save Roanoke JSON - use period from data for folder name
-    period = roanoke_data['period']
-    output_file = base_dir / 'roanoke' / period / 'roanoke_data.json'
-    output_file.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_file, 'w') as f:
-        json.dump(roanoke_data, f, indent=2)
-    print(f"[OK] Saved: {output_file}")
+    for metro in enabled_metros:
+        metro_slug = metro.get('name')
+        metro_display = metro.get('display_name', metro_slug)
+
+        if not metro_slug:
+            failed_metros.append("unknown")
+            print("[ERROR] Metro config missing required field: name")
+            continue
+
+        tsv_file = base_dir / input_pattern.format(name=metro_slug)
+        if not tsv_file.exists():
+            failed_metros.append(metro_display)
+            print(f"[ERROR] Missing extracted TSV for {metro_display}: {tsv_file}")
+            continue
+
+        output_dir = base_dir / metro.get('output_directory', metro_slug)
+
+        metro_data = process_metro_data(
+            tsv_file=str(tsv_file),
+            metro_name=metro_display,
+            output_dir=output_dir,
+            lookback_months=12
+        )
+
+        period = metro_data['period']
+        output_file = output_dir / period / f"{metro_slug}_data.json"
+        output_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_file, 'w') as f:
+            json.dump(metro_data, f, indent=2)
+
+        print(f"\n[OK] Saved: {output_file}")
+        processed_results.append((metro_display, metro_data))
+
+    if failed_metros:
+        print(f"\n[ERROR] Failed metros: {', '.join(failed_metros)}")
+        sys.exit(1)
 
     print("\n" + "="*60)
     print("[OK] DATA PROCESSING COMPLETE!")
     print("="*60)
-    print(f"\nCharlotte: {charlotte_data['current_stats']['total_cities']} cities, {charlotte_data['current_stats']['total_sales']} sales")
-    print(f"Roanoke:   {roanoke_data['current_stats']['total_cities']} cities, {roanoke_data['current_stats']['total_sales']} sales")
-    print(f"\n12-month default view: {len(charlotte_data['metro_trends'])} months, {len(charlotte_data['city_trends'])} cities")
-    print(f"Full historical data: {len(charlotte_data['full_metro_trends'])} months, {len(charlotte_data['available_cities'])} cities")
+    for metro_display, metro_data in processed_results:
+        print(
+            f"\n{metro_display}: "
+            f"{metro_data['current_stats']['total_cities']} cities, "
+            f"{metro_data['current_stats']['total_sales']} sales"
+        )
+        print(
+            f"  12-month default view: {len(metro_data['metro_trends'])} months, "
+            f"{len(metro_data['city_trends'])} cities"
+        )
+        print(
+            f"  Full historical data: {len(metro_data['full_metro_trends'])} months, "
+            f"{len(metro_data['available_cities'])} cities"
+        )
 
 if __name__ == '__main__':
     main()
