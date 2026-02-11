@@ -93,6 +93,16 @@ def _parse_scalar(value: str):
         return cleaned
 
 
+def parse_report_month(report_month: Optional[str]) -> Optional[pd.Timestamp]:
+    """Parse a YYYY-MM report month into a month-start timestamp."""
+    if report_month is None:
+        return None
+    try:
+        return pd.to_datetime(f"{report_month}-01", format="%Y-%m-%d")
+    except ValueError as exc:
+        raise ValueError(f"Invalid --month value '{report_month}'. Expected YYYY-MM.") from exc
+
+
 def load_seed_csv(seed_path: Path, limit: Optional[int] = None) -> List[dict]:
     """Load markets directly from seed CSV file."""
     markets = []
@@ -126,17 +136,24 @@ def load_universe(universe_path: Path, limit: Optional[int]) -> List[dict]:
     return markets
 
 
-def find_latest_period(metro_dir: Path) -> Optional[Path]:
+def find_latest_period(metro_dir: Path, report_month: Optional[str] = None) -> Optional[Path]:
     if not metro_dir.exists():
         return None
+    if report_month:
+        period_dir = metro_dir / report_month
+        return period_dir if period_dir.exists() and period_dir.is_dir() else None
     period_dirs = [d for d in metro_dir.iterdir() if d.is_dir() and len(d.name) == 7 and d.name[4] == "-"]
     if not period_dirs:
         return None
     return sorted(period_dirs, key=lambda p: p.name)[-1]
 
 
-def load_metrics_from_data_json(metro_dir: Path, slug: str) -> Optional[MarketMetrics]:
-    period_dir = find_latest_period(metro_dir)
+def load_metrics_from_data_json(
+    metro_dir: Path,
+    slug: str,
+    report_month: Optional[str] = None,
+) -> Optional[MarketMetrics]:
+    period_dir = find_latest_period(metro_dir, report_month)
     if not period_dir:
         return None
     data_file = period_dir / f"{slug}_data.json"
@@ -147,7 +164,12 @@ def load_metrics_from_data_json(metro_dir: Path, slug: str) -> Optional[MarketMe
     trends = data.get("full_metro_trends", [])
     if not trends:
         return None
-    latest = sorted(trends, key=lambda row: row.get("period", ""))[-1]
+    if report_month:
+        latest = next((row for row in trends if row.get("period") == report_month), None)
+        if latest is None:
+            return None
+    else:
+        latest = sorted(trends, key=lambda row: row.get("period", ""))[-1]
 
     return MarketMetrics(
         name=slug,
@@ -177,7 +199,12 @@ def calculate_weighted_median_price(df: pd.DataFrame) -> Optional[float]:
     return (df["MEDIAN_SALE_PRICE"] * df["HOMES_SOLD"]).sum() / total_sales
 
 
-def extract_metrics_from_df(df: pd.DataFrame, display_name: str, metro_code: str) -> Optional[MarketMetrics]:
+def extract_metrics_from_df(
+    df: pd.DataFrame,
+    display_name: str,
+    metro_code: str,
+    report_month: Optional[str] = None,
+) -> Optional[MarketMetrics]:
     """
     Extract market metrics from a pre-filtered DataFrame for a single metro.
 
@@ -191,6 +218,12 @@ def extract_metrics_from_df(df: pd.DataFrame, display_name: str, metro_code: str
     if not pd.api.types.is_datetime64_any_dtype(df["PERIOD_BEGIN"]):
         df = df.copy()
         df["PERIOD_BEGIN"] = pd.to_datetime(df["PERIOD_BEGIN"])
+
+    target_period = parse_report_month(report_month)
+    if target_period is not None:
+        if not (df["PERIOD_BEGIN"] == target_period).any():
+            return None
+        df = df[df["PERIOD_BEGIN"] <= target_period]
 
     latest_period = df["PERIOD_BEGIN"].max()
     current_month = latest_period.strftime("%Y-%m")
@@ -309,7 +342,12 @@ def load_master_tsv(tsv_path: Path) -> Optional[pd.DataFrame]:
     return df
 
 
-def load_metrics_from_master_tsv(tsv_path: Path, display_name: str, metro_code: str) -> Optional[MarketMetrics]:
+def load_metrics_from_master_tsv(
+    tsv_path: Path,
+    display_name: str,
+    metro_code: str,
+    report_month: Optional[str] = None,
+) -> Optional[MarketMetrics]:
     """
     Load metrics directly from the master TSV file by filtering on metro_code.
 
@@ -330,10 +368,15 @@ def load_metrics_from_master_tsv(tsv_path: Path, display_name: str, metro_code: 
         (df["PROPERTY_TYPE"] == "All Residential")
     ]
 
-    return extract_metrics_from_df(df, display_name, metro_code)
+    return extract_metrics_from_df(df, display_name, metro_code, report_month=report_month)
 
 
-def load_metrics_from_tsv(tsv_path: Path, display_name: str, metro_code: str) -> Optional[MarketMetrics]:
+def load_metrics_from_tsv(
+    tsv_path: Path,
+    display_name: str,
+    metro_code: str,
+    report_month: Optional[str] = None,
+) -> Optional[MarketMetrics]:
     if not tsv_path.exists():
         return None
 
@@ -342,6 +385,12 @@ def load_metrics_from_tsv(tsv_path: Path, display_name: str, metro_code: str) ->
         return None
 
     df["PERIOD_BEGIN"] = pd.to_datetime(df["PERIOD_BEGIN"])
+    target_period = parse_report_month(report_month)
+    if target_period is not None:
+        if not (df["PERIOD_BEGIN"] == target_period).any():
+            return None
+        df = df[df["PERIOD_BEGIN"] <= target_period]
+
     latest_period = df["PERIOD_BEGIN"].max()
     current_month = latest_period.strftime("%Y-%m")
 
@@ -706,6 +755,7 @@ def gather_metrics(
     base_dir: Path,
     output_pattern: str,
     master_tsv_path: Optional[Path] = None,
+    report_month: Optional[str] = None,
 ) -> List[MarketMetrics]:
     """
     Gather metrics for all markets from available data sources.
@@ -726,7 +776,7 @@ def gather_metrics(
         metro_code = market.get("metro_code", "")
 
         # Try 1: Load from pre-generated data.json (full pipeline output)
-        data_json_metrics = load_metrics_from_data_json(base_dir / slug, slug)
+        data_json_metrics = load_metrics_from_data_json(base_dir / slug, slug, report_month=report_month)
         if data_json_metrics:
             data_json_metrics.display_name = display_name
             data_json_metrics.metro_code = metro_code
@@ -735,7 +785,7 @@ def gather_metrics(
 
         # Try 2: Load from per-metro filtered TSV
         tsv_path = base_dir / output_pattern.format(name=slug)
-        tsv_metrics = load_metrics_from_tsv(tsv_path, display_name, metro_code)
+        tsv_metrics = load_metrics_from_tsv(tsv_path, display_name, metro_code, report_month=report_month)
         if tsv_metrics:
             metrics.append(tsv_metrics)
             continue
@@ -752,7 +802,12 @@ def gather_metrics(
             for idx, (display_name, metro_code) in enumerate(markets_needing_master, 1):
                 # Filter to this metro from the pre-loaded DataFrame
                 metro_df = master_df[master_df["PARENT_METRO_REGION_METRO_CODE"] == str(metro_code)]
-                master_metrics = extract_metrics_from_df(metro_df, display_name, metro_code)
+                master_metrics = extract_metrics_from_df(
+                    metro_df,
+                    display_name,
+                    metro_code,
+                    report_month=report_month,
+                )
                 if master_metrics:
                     metrics.append(master_metrics)
                 if idx % 10 == 0:
@@ -779,6 +834,9 @@ def run_radar(
     config = load_simple_yaml(config_path)
     paths = config.get("paths", {})
 
+    if month:
+        parse_report_month(month)
+
     output_dir = Path(paths.get("outputs_dir", "market_radar/outputs"))
     master_tsv_path = BASE_DIR / paths.get("source_file", "city_market_tracker.tsv000.gz")
 
@@ -789,7 +847,14 @@ def run_radar(
 
     # Gather metrics from master TSV
     output_pattern = "{name}_cities_filtered.tsv"
-    metrics = gather_metrics(markets, config, BASE_DIR, output_pattern, master_tsv_path)
+    metrics = gather_metrics(
+        markets,
+        config,
+        BASE_DIR,
+        output_pattern,
+        master_tsv_path,
+        report_month=month,
+    )
     if not metrics:
         raise RuntimeError("No market metrics found. Ensure city_market_tracker.tsv000.gz exists.")
 

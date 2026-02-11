@@ -374,7 +374,8 @@ def run_scheduled_pipeline(skip_fetch=False, skip_notify=False, skip_ai=False, d
                                     summary,
                                     email_config,
                                     ai_narrative,
-                                    output_directory=output_directory
+                                    output_directory=output_directory,
+                                    metro_slug=metro_slug,
                                 )
                             except Exception as metro_error:
                                 log_message(f"  [FAILED] Report send errored for {metro_display_name}: {metro_error}", log_file)

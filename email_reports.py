@@ -386,7 +386,14 @@ def send_email(config, subject, html_body, text_body, attachments=None):
         return False
 
 
-def send_market_report(metro_name, summary, config=None, ai_narrative=None, output_directory=None):
+def send_market_report(
+    metro_name,
+    summary,
+    config=None,
+    ai_narrative=None,
+    output_directory=None,
+    metro_slug=None,
+):
     """Send market report email for a specific metro.
 
     Args:
@@ -395,6 +402,7 @@ def send_market_report(metro_name, summary, config=None, ai_narrative=None, outp
         config: Email configuration dict
         ai_narrative: Optional AI-generated narrative text
         output_directory: Folder name where files are stored (e.g., "charlotte")
+        metro_slug: Config slug used for generated filenames (e.g., "charlotte")
     """
     if config is None:
         config = load_config()
@@ -415,17 +423,17 @@ def send_market_report(metro_name, summary, config=None, ai_narrative=None, outp
     else:
         metro_folder = Path(metro_name.lower().replace(', ', '_').replace(' ', '_'))
 
-    metro_slug = metro_folder.name
+    attachment_slug = metro_slug or metro_folder.name
     report_folder = base_dir / metro_folder / period
 
     if config.get('include_summary_attachment'):
-        summary_file = report_folder / f"{metro_slug}_summary.json"
+        summary_file = report_folder / f"{attachment_slug}_summary.json"
         if summary_file.exists():
             attachments.append(str(summary_file))
 
     # Add interactive dashboard HTML attachment
     if config.get('include_dashboard_attachment'):
-        dashboard_file = report_folder / f"dashboard_enhanced_{metro_slug}_{period}.html"
+        dashboard_file = report_folder / f"dashboard_enhanced_{attachment_slug}_{period}.html"
         if dashboard_file.exists():
             dashboard_attachment = str(dashboard_file)
             attachments.append(dashboard_attachment)
@@ -615,7 +623,8 @@ def main():
             summary,
             config=config,
             ai_narrative=ai_narrative,
-            output_directory=output_dir
+            output_directory=output_dir,
+            metro_slug=metro_name,
         )
         results.append((metro_name, success))
 
