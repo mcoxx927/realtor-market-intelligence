@@ -1,0 +1,57 @@
+﻿market_name,state,preferred_region_type,metro_code,display_name,output_directory,lat,lon,notes,source
+Beckley,WV,metro,13220,"Beckley, WV",,37.905659,-81.163748,New from TSV - needs lat/lon,tsv_extract
+Bluefield,WV,metro,14140,"Bluefield, WV",,37.248463,-81.359375,New from TSV - needs lat/lon,tsv_extract
+Charleston,WV,metro,16620,"Charleston, WV",,38.283213,-81.492557,New from TSV - needs lat/lon,tsv_extract
+Clarksburg,WV,metro,17220,"Clarksburg, WV",,39.28835,-80.43153,New from TSV - needs lat/lon,tsv_extract
+Elkins,WV,metro,21180,"Elkins, WV",,38.781095,-79.867788,New from TSV - needs lat/lon,tsv_extract
+Fairmont,WV,metro,21900,"Fairmont, WV",,39.505839,-80.243402,New from TSV - needs lat/lon,tsv_extract
+Huntington,WV,metro,26580,"Huntington, WV",,38.357487,-82.579994,New from TSV - needs lat/lon,tsv_extract
+Morgantown,WV,metro,34060,"Morgantown, WV",,39.525155,-79.801912,New from TSV - needs lat/lon,tsv_extract
+Mount Gay,WV,metro,34350,"Mount Gay, WV",,37.847222,-82.029722,New from TSV - needs lat/lon,tsv_extract
+Parkersburg,WV,metro,37620,"Parkersburg, WV",,39.141531,-81.460402,New from TSV - needs lat/lon,tsv_extract
+Point Pleasant,WV,metro,38580,"Point Pleasant, WV",,38.857527,-82.128571,New from TSV - needs lat/lon,tsv_extract
+Wheeling,WV,metro,48540,"Wheeling, WV",,39.977687,-80.854826,New from TSV - needs lat/lon,tsv_extract
+Big Stone Gap,VA,metro,13720,"Big Stone Gap, VA",,36.8817,-82.7472,New from TSV - needs lat/lon,tsv_extract
+Blacksburg,VA,metro,13980,"Blacksburg, VA",,37.2296,-80.4139,Seed list for 4-hour drive shed,manual
+Charlottesville,VA,metro,16820,"Charlottesville, VA",,38.0293,-78.4767,Seed list for 4-hour drive shed,manual
+Danville,VA,metro,19260,"Danville, VA",,36.811853,-79.400122,New from TSV - needs lat/lon,tsv_extract
+Harrisonburg,VA,metro,25500,"Harrisonburg, VA",,38.4496,-78.8689,Seed list for 4-hour drive shed,manual
+Lynchburg,VA,metro,31340,"Lynchburg, VA",,37.41375,-79.14225,Seed list for 4-hour drive shed,manual
+Martinsville,VA,metro,32300,"Martinsville, VA",,36.682503,-79.872564,New from TSV - needs lat/lon,tsv_extract
+Richmond,VA,metro,40060,"Richmond, VA",,37.5407,-77.436,Seed list for 4-hour drive shed,manual
+Roanoke,VA,metro,40220,"Roanoke, VA",,37.27097,-79.94143,Seed list for 4-hour drive shed,manual
+Staunton,VA,metro,44420,"Staunton, VA",,38.1496,-79.0717,Seed list for 4-hour drive shed,manual
+Virginia Beach,VA,metro,47260,"Virginia Beach, VA",,36.837289,-76.391849,New from TSV - needs lat/lon,tsv_extract
+Winchester,VA,metro,49020,"Winchester, VA",,39.272974,-78.471828,New from TSV - needs lat/lon,tsv_extract
+Greeneville,TN,metro,24620,"Greeneville, TN",,36.179487,-82.847523,New from TSV - needs lat/lon,tsv_extract
+Johnson City,TN,metro,27740,"Johnson City, TN",,36.265822,-82.332693,New from TSV - needs lat/lon,tsv_extract
+Kingsport,TN,metro,28700,"Kingsport, TN",,36.604161,-82.440145,New from TSV - needs lat/lon,tsv_extract
+Newport,TN,metro,35460,"Newport, TN",,35.916198,-83.119224,New from TSV - needs lat/lon,tsv_extract
+Albemarle,NC,metro,10620,"Albemarle, NC",,35.310449,-80.254374,New from TSV - needs lat/lon,tsv_extract
+Asheville,NC,metro,11700,"Asheville, NC",,35.61634,-82.570683,New from TSV - needs lat/lon,tsv_extract
+Boone,NC,metro,14380,"Boone, NC",,36.235368,-81.709888,New from TSV - needs lat/lon,tsv_extract
+Burlington,NC,metro,15500,"Burlington, NC",,36.043954,-79.400573,New from TSV - needs lat/lon,tsv_extract
+Charlotte,NC,metro,16740,"Charlotte, NC",,35.2271,-80.8431,Seed list for 4-hour drive shed,manual
+Durham,NC,metro,20500,"Durham, NC",,35.995536,-79.09699,New from TSV - needs lat/lon,tsv_extract
+Fayetteville,NC,metro,22180,"Fayetteville, NC",,35.037956,-78.982209,New from TSV - needs lat/lon,tsv_extract
+Forest City,NC,metro,22580,"Forest City, NC",,35.402747,-81.919582,New from TSV - needs lat/lon,tsv_extract
+Goldsboro,NC,metro,24140,"Goldsboro, NC",,35.35419,-78.00867,New from TSV - needs lat/lon,tsv_extract
+Greensboro,NC,metro,24660,"Greensboro, NC",,36.0726,-79.792,Seed list for 4-hour drive shed,manual
+Greenville,NC,metro,24780,"Greenville, NC",,35.59249,-77.372739,New from TSV - needs lat/lon,tsv_extract
+Henderson,NC,metro,25780,"Henderson, NC",,36.365481,-78.405434,New from TSV - needs lat/lon,tsv_extract
+Hickory,NC,metro,25860,"Hickory, NC",,35.814295,-81.456584,New from TSV - needs lat/lon,tsv_extract
+Kinston,NC,metro,28820,"Kinston, NC",,35.240066,-77.635514,New from TSV - needs lat/lon,tsv_extract
+Laurinburg,NC,metro,29900,"Laurinburg, NC",,34.840023,-79.477337,New from TSV - needs lat/lon,tsv_extract
+Lumberton,NC,metro,31300,"Lumberton, NC",,34.63921,-79.100881,New from TSV - needs lat/lon,tsv_extract
+Marion,NC,metro,32000,"Marion, NC",,35.682268,-82.048045,New from TSV - needs lat/lon,tsv_extract
+Mount Airy,NC,metro,34340,"Mount Airy, NC",,36.415416,-80.686463,New from TSV - needs lat/lon,tsv_extract
+North Wilkesboro,NC,metro,35900,"North Wilkesboro, NC",,36.208883,-81.166095,New from TSV - needs lat/lon,tsv_extract
+Pinehurst,NC,metro,38240,"Pinehurst, NC",,35.308273,-79.492723,New from TSV - needs lat/lon,tsv_extract
+Raleigh,NC,metro,39580,"Raleigh, NC",,35.756746,-78.460441,New from TSV - needs lat/lon,tsv_extract
+Roanoke Rapids,NC,metro,40260,"Roanoke Rapids, NC",,36.320576,-77.542757,New from TSV - needs lat/lon,tsv_extract
+Rockingham,NC,metro,40460,"Rockingham, NC",,35.004636,-79.755695,New from TSV - needs lat/lon,tsv_extract
+Rocky Mount,NC,metro,40580,"Rocky Mount, NC",,35.941045,-77.798549,New from TSV - needs lat/lon,tsv_extract
+Sanford,NC,metro,41820,"Sanford, NC",,35.476336,-79.172117,New from TSV - needs lat/lon,tsv_extract
+Shelby,NC,metro,43140,"Shelby, NC",,35.33463,-81.557114,New from TSV - needs lat/lon,tsv_extract
+Wilson,NC,metro,48980,"Wilson, NC",,35.700357,-77.921598,New from TSV - needs lat/lon,tsv_extract
+Winston-Salem,NC,metro,49180,"Winston-Salem, NC",,36.0999,-80.2442,Seed list for 4-hour drive shed,manual

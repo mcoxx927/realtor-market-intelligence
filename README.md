@@ -1,236 +1,198 @@
 # Real Estate Market Intelligence Analysis
 
-Automated pipeline for analyzing Redfin city-level market data with Python-generated strategic insights.
+Automated monthly pipeline for Redfin city-level housing analysis, dashboards, strategic summaries, optional AI narrative generation, and email delivery.
 
 ## Analysis Overview
 
-- **Markets Analyzed:** Charlotte-Concord-Gastonia, NC-SC | Roanoke, VA
-- **Data Source:** Redfin City Market Tracker (TSV format)
-- **Time Period:** 2012-2025 (Historical data available)
-- **Analysis Level:** Metro + City (Top 10 cities per metro)
-- **Update Frequency:** Monthly
+- Markets are defined in `metro_config.json` (currently Charlotte and Roanoke).
+- Source data is Redfin `city_market_tracker.tsv000.gz`.
+- Processing includes metro-level and city-level trend calculations.
+- Output period folders are derived from the latest data month (for example `2025-12`).
+
+## Pipeline Flow
+
+```
+city_market_tracker.tsv000.gz
+  -> extract_metros.py
+  -> process_market_data.py
+  -> generate_dashboards_v2.py
+  -> extract_summary.py
+  -> (optional) ai_narrative.py
+  -> (optional) email_reports.py / run_scheduled.py notifications
+```
+
+## Key Scripts
+
+- `run_market_analysis.py`: One-off full pipeline (extract, process, dashboard, summary).
+- `run_scheduled.py`: Scheduled automation wrapper with optional fetch, optional AI, and email notifications.
+- `fetch_redfin_data.py`: Downloads latest Redfin source data.
+- `ai_narrative.py`: Generates optional narrative files from summary and trend data.
+- `email_reports.py`: Sends test emails or metro report emails manually.
 
 ## Quick Start
 
-### Monthly Workflow
+1. Install dependencies.
 
-1. **Download latest data from Redfin:**
-New data will be released monthly during the Friday of the third full week of the month
-
-https://redfin-public-data.s3.us-west-2.amazonaws.com/redfin_market_tracker/city_market_tracker.tsv000.gz
-	OR manually
-https://www.redfin.com/news/data-center/
-   - scroll to "Redfin Monthly Housing Market Data"
-    - Click on "city" hyperlink in this section:
-		Download region data here: National, Metro, State, County, City, Zip Code, Neighborhood
-   - Get `city_market_tracker.tsv000.gz` from Redfin Data Center
-   - Place in project root directory
-
-2. **Run the complete pipeline:**
-   ```bash
-   python run_market_analysis.py
-   ```
-
-3. **Review the outputs:**
-   - Enhanced HTML dashboards with interactive charts
-   - JSON data files with 12-month historical trends
-   - Strategic analysis summaries with market recommendations
-
-## System Architecture
-
-### Pipeline Components
-
-```
-city_market_tracker.tsv000.gz (918MB national file)
-           ↓
-[Step 1] extract_metros.py
-           - Reads metro_config.json
-           - Extracts Charlotte, Roanoke, + configurable metros
-           ↓
-charlotte_cities_filtered.tsv + roanoke_cities_filtered.tsv
-           ↓
-[Step 2] process_market_data.py
-           - Processes last 12 months of data
-           - Calculates health scores
-           - Identifies top 10 cities
-           ↓
-charlotte_data.json + roanoke_data.json
-           ↓
-[Step 3] generate_dashboards_v2.py
-           - Enhanced HTML with interactive charts
-           - Dropdown selectors for metrics
-           - Top 5 city historical trends
-           ↓
-dashboard_enhanced_[metro]_YYYY-MM.html
-           ↓
-[Step 4] extract_summary.py
-           - Classifies markets (BULLISH/NEUTRAL/BEARISH)
-           - Generates seller/buyer/investor recommendations
-           - Identifies alert cities with severity levels
-           ↓
-[metro]_summary.json (strategic analysis + recommendations)
-```
-
----
-
-## Files and Configuration
-
-### Configuration Files
-
-**metro_config.json** - Define which metros to analyze
-```json
-{
-  "metros": [
-    {
-      "name": "charlotte",
-      "display_name": "Charlotte, NC",
-      "metro_code": "16740",
-      "enabled": true
-    }
-  ]
-}
-```
-
-### Python Scripts
-
-1. **extract_metros.py** - Extracts metros from raw national TSV file
-2. **process_market_data.py** - Processes TSV into JSON with 12-month trends
-3. **generate_dashboards_v2.py** - Generates enhanced HTML dashboards
-4. **extract_summary.py** - Generates strategic analysis with recommendations
-5. **run_market_analysis.py** - Master script that runs all four steps in sequence
-
-### Output Structure
-
-```
-charlotte/
-└── YYYY-MM/
-    ├── charlotte_data.json                          (12-month trends)
-    ├── dashboard_enhanced_charlotte_YYYY-MM.html    (Interactive charts)
-    └── charlotte_summary.json                       (Strategic analysis + recommendations)
-
-roanoke/
-└── YYYY-MM/
-    ├── roanoke_data.json                            (12-month trends)
-    ├── dashboard_enhanced_roanoke_YYYY-MM.html      (Interactive charts)
-    └── roanoke_summary.json                         (Strategic analysis + recommendations)
-```
-
-**Note:** YYYY-MM folder is determined dynamically from the data period, not hardcoded.
-
----
-
-## Dashboard Features
-
-### Enhanced HTML Dashboards
-
-The generated dashboards include:
-
-**1. Metro Inventory Dynamics Chart**
-- Dropdown to toggle between Active/New/Pending listings
-- 12-month historical trends
-
-**2. Price Reductions Chart**
-- Bar chart showing properties with price cuts
-
-**3. DOM + Pending Ratio Chart**
-- Dual Y-axis chart with 12-month trends
-
-**4. Top 5 Cities Historical Trends**
-- City selector dropdown (choose which city to view)
-- Metric selector dropdown (Inventory/Sales/DOM/Price)
-- Shows ONE metric at a time for proper scaling
-
-**5. Top 10 Cities Table**
-- Current month snapshot with health scores
-
----
-
-## Strategic Analysis Summary
-
-The `{metro}_summary.json` file contains Python-generated market analysis:
-
-### Market Classification
-- **Market Status:** BULLISH / SLIGHTLY_BULLISH / NEUTRAL / SLIGHTLY_BEARISH / BEARISH
-- **Market Description:** Human-readable summary of market conditions
-- **Health Score:** 0-100 rating of market strength
-
-### City Tiers
-Cities are automatically classified into three market tiers:
-- **HOT Markets:** Strong seller advantage, high demand
-- **BALANCED Markets:** Equilibrium between buyers and sellers
-- **BUYER Markets:** Buyer advantage, excess inventory
-
-### Recommendations by Role
-Strategic guidance provided for:
-- **Sellers:** Pricing strategy and timeline expectations
-- **Buyers:** Negotiating approach and market conditions
-- **Investors:** Strategy focus (appreciation vs. cash flow)
-
-### Alert Cities
-Cities with concerning metrics identified and ranked by severity:
-- **HIGH:** Significant inventory surges, major price declines
-- **MEDIUM:** Emerging issues, requires monitoring
-- **LOW:** Minor concerns, standard approach sufficient
-
-Each alert includes specific recommendations for action.
-
----
-
-## Adding New Metros
-
-To add a new metro area (e.g., Austin, TX):
-
-1. **Find the metro code:**
-   - Look up PARENT_METRO_REGION_METRO_CODE in Redfin data
-   - Example: Austin = 12420
-
-2. **Edit metro_config.json:**
-   ```json
-   {
-     "name": "austin",
-     "display_name": "Austin, TX",
-     "metro_code": "12420",
-     "enabled": true
-   }
-   ```
-
-3. **Run the pipeline:**
-   ```bash
-   python run_market_analysis.py
-   ```
-
-**No code changes required!**
-
----
-
-## Requirements
-
-Python packages:
 ```bash
-pip install pandas
+pip install -r requirements.txt
 ```
 
-Dashboards use CDN for TailwindCSS and Chart.js (no local install needed).
+2. Put `city_market_tracker.tsv000.gz` in the repo root.
+
+3. Confirm `metro_config.json` has the metros you want and `enabled: true`.
+
+4. Run the pipeline.
+
+```bash
+python run_market_analysis.py
+```
+
+5. For scheduler-style execution (with notifications), run:
+
+```bash
+python run_scheduled.py
+```
+
+Useful scheduler flags:
+
+- `--no-fetch`
+- `--no-notify`
+- `--no-ai`
+- `--dry-run`
+
+## Configuration
+
+### `metro_config.json`
+
+Each enabled metro should define:
+
+- `name`: slug used in filenames (example `charlotte`)
+- `display_name`: readable label (example `Charlotte, NC`)
+- `metro_code`: Redfin metro code
+- `output_directory`: where reports are written (example `core_markets/charlotte`)
+- `enabled`: include metro in pipeline run
+
+`data_settings.output_file_pattern` controls extracted TSV naming (default `{name}_cities_filtered.tsv`).
+
+### `notifications_config.json` and `.env`
+
+Email and scheduler settings load from `notifications_config.json`, then environment variables override them.
+
+Important email defaults now:
+
+- `include_summary_attachment`: `false`
+- `include_dashboard_attachment`: `true`
+
+If `.env` includes `INCLUDE_SUMMARY_ATTACHMENT`, it overrides JSON.
+
+## Output Structure
+
+Extracted TSVs are written to repo root:
+
+- `charlotte_cities_filtered.tsv`
+- `roanoke_cities_filtered.tsv`
+- additional metros follow `{name}_cities_filtered.tsv`
+
+Per-metro outputs are written to each metro's `output_directory`:
+
+```
+core_markets/
+  charlotte/
+    YYYY-MM/
+      charlotte_data.json
+      charlotte_summary.json
+      dashboard_enhanced_charlotte_YYYY-MM.html
+      charlotte_narrative.txt            # optional
+      charlotte_narrative.json           # optional
+  roanoke/
+    YYYY-MM/
+      roanoke_data.json
+      roanoke_summary.json
+      dashboard_enhanced_roanoke_YYYY-MM.html
+      roanoke_narrative.txt              # optional
+      roanoke_narrative.json             # optional
+```
+
+## Email Behavior
+
+`run_scheduled.py` sends:
+
+- Pipeline status email (success or failure based on config).
+- Per-metro report emails when pipeline succeeds.
+
+Per-metro email includes:
+
+- HTML + plain-text summary body.
+- AI narrative content in body when available.
+- Dashboard attachment when enabled and present.
+- Summary JSON attachment only when explicitly enabled.
+
+If dashboard attachment delivery fails (size/policy), the sender retries without dashboard, then retries without attachments so the report body still delivers.
+
+## Windows Task Scheduler
+
+You can schedule `run_scheduled.py` directly or use `setup_task_scheduler.ps1`.
+
+Example task command:
+
+```powershell
+python C:\path\to\run_scheduled.py --no-fetch
+```
+
+Logs are written to `pipeline_runs.log` by default.
+
+## Roanoke 4-Hour Market Radar (Add-on)
+
+Run:
+
+```bash
+python market_radar/run_roanoke_radar.py
+```
+
+Notes:
+
+- Radar config: `market_radar/roanoke_radar_config.yaml`
+- Seed list: `market_radar/seeds_roanoke_4hr.csv`
+- Output: `market_radar/outputs/YYYY-MM/`
+- The radar uses existing metro outputs from configured metro directories when available.
+
+## Distressed Market Fit (Add-on)
+
+Run:
+
+```bash
+python market_radar/run_distressed_fit.py
+```
+
+Useful flags:
+
+- `--month YYYY-MM`
+- `--limit N`
+- `--with-backtest`
+- `--competition-csv path/to/competition_proxy.csv`
+- `--housing-age-csv path/to/housing_age_proxy.csv`
+
+Notes:
+
+- Config: `market_radar/distressed_fit_config.yaml`
+- Optional external proxy inputs: `market_radar/inputs/competition_proxy.csv`, `market_radar/inputs/housing_age_proxy.csv`
+- Outputs: `market_radar/outputs_distressed_fit/YYYY-MM/`
+  - `distressed_fit_ranked.csv`
+  - `distressed_fit_ranked.md`
+  - `distressed_fit_diagnostics.json`
+
+## Troubleshooting
+
+- If emails reference the wrong month, verify all scripts are writing to the same `output_directory` tree in `metro_config.json`.
+- If detailed market emails are missing, check `pipeline_runs.log` for per-metro `[SKIP]` or `[FAILED]` lines in the notification section.
+- If email config appears ignored, check `.env` for override variables.
+
+## Data Source
+
+- Redfin Data Center: https://www.redfin.com/news/data-center/
+- Primary file: `city_market_tracker.tsv000.gz`
+- Coverage: US city-level monthly housing metrics
 
 ---
 
-## Data Sources
-
-**Source:** Redfin Data Center
-- URL: https://www.redfin.com/news/data-center/
-- File: city_market_tracker.tsv000.gz (918MB, updated monthly)
-- Coverage: National (all US metros)
-- History: 2012-present
-- Metrics: ~58 fields per city-month-property type
-
-**Current Metros Analyzed:**
-- Charlotte-Concord-Gastonia, NC-SC (Metro Code: 16740)
-  - 105 cities available, 78 in top 10 analysis, 2,486 sales (Oct 2025)
-
-- Roanoke, VA (Metro Code: 40220)
-  - 24 cities available, 16 in top 10 analysis, 242 sales (Oct 2025)
-
----
-
-**Last Updated:** December 15, 2025
-**Pipeline Version:** 2.1 (Dynamic dates + Python-generated strategic analysis)
+Last updated: February 10, 2026

@@ -1,0 +1,182 @@
+{
+  "generated_at": "2026-02-11T00:44:16.568396+00:00",
+  "target_month": "2025-12",
+  "config_path": "/mnt/c/Users/1/Documents/GitHub/realtor monthly data analysis/market_radar/distressed_fit_config.yaml",
+  "markets_scored": 56,
+  "score_summary": {
+    "avg": 49.038,
+    "min": 27.5,
+    "max": 69.9
+  },
+  "decision_counts": {
+    "PRIORITY_WATCH": 5,
+    "WATCH": 19,
+    "AVOID": 17,
+    "DISQUALIFIED": 15
+  },
+  "data_quality_counts": {
+    "PARTIAL_EXTERNAL": 56
+  },
+  "backtest": {
+    "enabled": true,
+    "status": "FAIL",
+    "months_evaluated": [
+      "2025-06",
+      "2025-07",
+      "2025-08",
+      "2025-09",
+      "2025-10",
+      "2025-11"
+    ],
+    "month_results": [
+      {
+        "month": "2025-06",
+        "next_month": "2025-07",
+        "quartile_size": 10,
+        "checks": {
+          "dom_change": true,
+          "mos_change": true,
+          "pending_resilience": true,
+          "checks_passed": 3
+        },
+        "top_outcomes": {
+          "dom_change": 2.8949759279932854,
+          "mos_change": 0.19368955606091393,
+          "pending_resilience": 0.039168697576464906
+        },
+        "bottom_outcomes": {
+          "dom_change": 6.0957329919440895,
+          "mos_change": 0.26697697681793653,
+          "pending_resilience": -0.05410577606690965
+        },
+        "month_pass": true,
+        "low_confidence_ratio": 0.0
+      },
+      {
+        "month": "2025-07",
+        "next_month": "2025-08",
+        "quartile_size": 10,
+        "checks": {
+          "dom_change": true,
+          "mos_change": true,
+          "pending_resilience": true,
+          "checks_passed": 3
+        },
+        "top_outcomes": {
+          "dom_change": 4.085578229025437,
+          "mos_change": 0.17274393122200749,
+          "pending_resilience": 0.060511498997230184
+        },
+        "bottom_outcomes": {
+          "dom_change": 11.124038221631743,
+          "mos_change": 0.827550448487792,
+          "pending_resilience": 0.0555980252531084
+        },
+        "month_pass": true,
+        "low_confidence_ratio": 0.0
+      },
+      {
+        "month": "2025-08",
+        "next_month": "2025-09",
+        "quartile_size": 10,
+        "checks": {
+          "dom_change": false,
+          "mos_change": false,
+          "pending_resilience": false,
+          "checks_passed": 0
+        },
+        "top_outcomes": {
+          "dom_change": 3.3933868402308365,
+          "mos_change": 0.18370939423844362,
+          "pending_resilience": 0.023745782104375317
+        },
+        "bottom_outcomes": {
+          "dom_change": -4.6205227995278335,
+          "mos_change": -0.3036672331944559,
+          "pending_resilience": 0.18061720727720765
+        },
+        "month_pass": false,
+        "low_confidence_ratio": 0.0
+      },
+      {
+        "month": "2025-09",
+        "next_month": "2025-10",
+        "quartile_size": 10,
+        "checks": {
+          "dom_change": false,
+          "mos_change": true,
+          "pending_resilience": false,
+          "checks_passed": 1
+        },
+        "top_outcomes": {
+          "dom_change": 2.1716362601144925,
+          "mos_change": -0.027175026364255395,
+          "pending_resilience": 0.032375488148102684
+        },
+        "bottom_outcomes": {
+          "dom_change": -1.9236778192352617,
+          "mos_change": 0.03700245497164021,
+          "pending_resilience": 0.06590372520794183
+        },
+        "month_pass": false,
+        "low_confidence_ratio": 0.0
+      },
+      {
+        "month": "2025-10",
+        "next_month": "2025-11",
+        "quartile_size": 10,
+        "checks": {
+          "dom_change": true,
+          "mos_change": false,
+          "pending_resilience": false,
+          "checks_passed": 1
+        },
+        "top_outcomes": {
+          "dom_change": -2.495592288357585,
+          "mos_change": 0.5264822340944388,
+          "pending_resilience": -0.031181014776785056
+        },
+        "bottom_outcomes": {
+          "dom_change": 2.2652637066507646,
+          "mos_change": 0.4443566875085511,
+          "pending_resilience": 0.05790426343617552
+        },
+        "month_pass": false,
+        "low_confidence_ratio": 0.0
+      },
+      {
+        "month": "2025-11",
+        "next_month": "2025-12",
+        "quartile_size": 9,
+        "checks": {
+          "dom_change": false,
+          "mos_change": true,
+          "pending_resilience": false,
+          "checks_passed": 1
+        },
+        "top_outcomes": {
+          "dom_change": 9.19694818462762,
+          "mos_change": -1.0644736726195712,
+          "pending_resilience": 0.03986726345936384
+        },
+        "bottom_outcomes": {
+          "dom_change": 3.750816063362112,
+          "mos_change": -0.13570119762347074,
+          "pending_resilience": 0.06367388837223255
+        },
+        "month_pass": false,
+        "low_confidence_ratio": 0.0
+      }
+    ],
+    "summary": {
+      "months_passing_quartile_rule": 2,
+      "missing_feature_violations": 0,
+      "roanoke_oscillation_violation": false
+    },
+    "pass_criteria": {
+      "quartile_outperformance": false,
+      "missing_feature_threshold": true,
+      "roanoke_stability": true
+    }
+  }
+}

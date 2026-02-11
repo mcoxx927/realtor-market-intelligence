@@ -9,7 +9,7 @@
     "recipients": [],
     "send_on_success": true,
     "send_on_failure": true,
-    "include_summary_attachment": true
+    "include_summary_attachment": false
   },
   "ai_narrative": {
     "enabled": false,

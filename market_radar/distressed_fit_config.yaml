@@ -1,0 +1,30 @@
+# Distressed Market Fit v1 configuration
+
+target_month: null
+markets_seed: "market_radar/seeds_roanoke_4hr.csv"
+
+weights:
+  distress_inflow: 0.20
+  rehab_risk: 0.22
+  spread_reliability: 0.20
+  exit_liquidity: 0.18
+  investor_demand_depth: 0.12
+  competition_pressure: 0.08
+
+hard_filters:
+  min_homes_sold: 20
+  max_months_of_supply: 6.5
+  max_median_dom: 95
+
+buy_box:
+  target_price_min: 120000
+  target_price_max: 380000
+  target_rehab_level: "light_medium"
+
+data_paths:
+  master_tsv: "city_market_tracker.tsv000.gz"
+  core_market_root: "core_markets"
+  competition_csv: "market_radar/inputs/competition_proxy.csv"
+  housing_age_csv: "market_radar/inputs/housing_age_proxy.csv"
+
+output_dir: "market_radar/outputs_distressed_fit"

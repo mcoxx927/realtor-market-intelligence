@@ -51,7 +51,7 @@ def load_config():
         'recipients': [],
         'send_on_success': True,
         'send_on_failure': True,
-        'include_summary_attachment': True,
+        'include_summary_attachment': False,
         'include_dashboard_attachment': True
     }
 
@@ -386,7 +386,14 @@ def send_email(config, subject, html_body, text_body, attachments=None):
         return False
 
 
-def send_market_report(metro_name, summary, config=None, ai_narrative=None, output_directory=None):
+def send_market_report(
+    metro_name,
+    summary,
+    config=None,
+    ai_narrative=None,
+    output_directory=None,
+    metro_slug=None,
+):
     """Send market report email for a specific metro.
 
     Args:
@@ -395,6 +402,7 @@ def send_market_report(metro_name, summary, config=None, ai_narrative=None, outp
         config: Email configuration dict
         ai_narrative: Optional AI-generated narrative text
         output_directory: Folder name where files are stored (e.g., "charlotte")
+        metro_slug: Config slug used for generated filenames (e.g., "charlotte")
     """
     if config is None:
         config = load_config()
@@ -406,32 +414,53 @@ def send_market_report(metro_name, summary, config=None, ai_narrative=None, outp
 
     # Prepare attachments
     attachments = []
+    dashboard_attachment = None
     base_dir = Path(__file__).parent
 
     # Use output_directory if provided, otherwise derive from metro_name
     if output_directory:
-        metro_folder = output_directory
+        metro_folder = Path(output_directory)
     else:
-        metro_folder = metro_name.lower().replace(', ', '_').replace(' ', '_')
+        metro_folder = Path(metro_name.lower().replace(', ', '_').replace(' ', '_'))
+
+    attachment_slug = metro_slug or metro_folder.name
+    report_folder = base_dir / metro_folder / period
 
     if config.get('include_summary_attachment'):
-        summary_file = base_dir / metro_folder / period / f"{metro_folder}_summary.json"
+        summary_file = report_folder / f"{attachment_slug}_summary.json"
         if summary_file.exists():
             attachments.append(str(summary_file))
 
     # Add interactive dashboard HTML attachment
-    dashboard_attached = False
     if config.get('include_dashboard_attachment'):
-        dashboard_file = base_dir / metro_folder / period / f"dashboard_enhanced_{metro_folder}_{period}.html"
+        dashboard_file = report_folder / f"dashboard_enhanced_{attachment_slug}_{period}.html"
         if dashboard_file.exists():
-            attachments.append(str(dashboard_file))
-            dashboard_attached = True
+            dashboard_attachment = str(dashboard_file)
+            attachments.append(dashboard_attachment)
             print(f"    [+] Dashboard attached: {dashboard_file.name} ({dashboard_file.stat().st_size / 1024 / 1024:.1f} MB)")
 
-    html_body = generate_email_html(summary, include_ai_narrative=ai_narrative, dashboard_attached=dashboard_attached)
-    text_body = generate_plain_text(summary, dashboard_attached=dashboard_attached)
+    def _send_with_attachments(current_attachments):
+        has_dashboard = bool(dashboard_attachment and dashboard_attachment in current_attachments)
+        html_body = generate_email_html(summary, include_ai_narrative=ai_narrative, dashboard_attached=has_dashboard)
+        text_body = generate_plain_text(summary, dashboard_attached=has_dashboard)
+        return send_email(config, subject, html_body, text_body, current_attachments)
 
-    return send_email(config, subject, html_body, text_body, attachments)
+    # First try with requested attachments.
+    success = _send_with_attachments(attachments)
+
+    # If dashboard attachment caused rejection (size/policy), retry without dashboard.
+    if not success and dashboard_attachment and dashboard_attachment in attachments:
+        retry_without_dashboard = [a for a in attachments if a != dashboard_attachment]
+        print("    [WARN] Retrying email without dashboard attachment...")
+        success = _send_with_attachments(retry_without_dashboard)
+        attachments = retry_without_dashboard
+
+    # Final fallback: deliver report body without attachments.
+    if not success and attachments:
+        print("    [WARN] Retrying email without attachments...")
+        success = _send_with_attachments([])
+
+    return success
 
 
 def send_pipeline_notification(success, message, metros_processed=None, config=None):
@@ -594,7 +623,8 @@ def main():
             summary,
             config=config,
             ai_narrative=ai_narrative,
-            output_directory=output_dir
+            output_directory=output_dir,
+            metro_slug=metro_name,
         )
         results.append((metro_name, success))
 

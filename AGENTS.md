@@ -1,5 +1,10 @@
 # Repository Guidelines
 
+## Canonical AI Ops Playbook
+- Follow `docs/ai/PLAYBOOK.md` as the canonical workflow for agent sessions.
+- End meaningful sessions with a handoff note in `docs/handoffs/` using `docs/handoffs/TEMPLATE.md`.
+- Log process failures in `docs/ai/LESSONS.md`, append session changes to `docs/DEVLOG.md`, and capture durable architecture decisions in `docs/decisions/`.
+
 ## Project Structure & Module Organization
 - Root Python pipeline scripts: `extract_metros.py`, `process_market_data.py`, `generate_dashboards_v2.py`, and the orchestrator `run_market_analysis.py`.
 - Configuration lives in `metro_config.json`; update metro codes or data paths here before running the pipeline.

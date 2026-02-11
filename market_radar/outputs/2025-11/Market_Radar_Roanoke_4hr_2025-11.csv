@@ -1,0 +1,57 @@
+rank,market,period,median_sale_price,median_sale_price_yoy,inventory,inventory_yoy,new_listings,homes_sold,median_dom,median_dom_yoy,months_of_supply,pending_sales,pending_sales_yoy,health_score,health_bucket,dealability_score,bucket,data_source
+1,"Staunton, VA",2025-11,331550,-0.3%,239,-2.4%,125,121,39,107.1%,1.98,114,22.6%,74,BULLISH,85.7,GO DEEP,master_tsv
+2,"Harrisonburg, VA",2025-11,355149,-0.8%,154,51.0%,57,60,18,-62.0%,2.57,52,-27.8%,73,BULLISH,85.2,GO DEEP,master_tsv
+3,"Roanoke Rapids, NC",2025-11,198466,31.8%,76,230.4%,7,15,49,-28.5%,5.07,13,160.0%,87,BULLISH,82.3,GO DEEP,master_tsv
+4,"Roanoke, VA",2025-11,307428,-2.8%,667,51.9%,233,229,25,,2.91,225,3.2%,67,SLIGHTLY_BULLISH,81.8,GO DEEP,C:\Users\1\Documents\GitHub\realtor monthly data analysis\roanoke_cities_filtered.tsv
+5,"Parkersburg, WV",2025-11,181716,9.1%,140,-0.7%,36,37,58,-3.7%,3.78,57,32.6%,74,BULLISH,81.8,GO DEEP,master_tsv
+6,"North Wilkesboro, NC",2025-11,275590,10.5%,40,-21.6%,10,10,50,-20.9%,4.0,13,30.0%,87,BULLISH,80.8,GO DEEP,master_tsv
+7,"Wilson, NC",2025-11,257542,1.9%,198,1.0%,43,35,39,-11.3%,5.66,42,2.4%,73,BULLISH,80.7,GO DEEP,master_tsv
+8,"Huntington, WV",2025-11,206714,11.9%,377,-5.3%,122,97,42,-34.6%,3.89,112,-14.5%,60,SLIGHTLY_BULLISH,78.0,GO DEEP,master_tsv
+9,"Wheeling, WV",2025-11,150973,-4.5%,225,-14.1%,52,60,55,4.9%,3.75,60,3.4%,60,SLIGHTLY_BULLISH,78.0,GO DEEP,master_tsv
+10,"Charlottesville, VA",2025-11,529598,5.7%,316,5.3%,129,97,44,-0.9%,3.26,131,-2.2%,60,SLIGHTLY_BULLISH,78.0,GO DEEP,master_tsv
+11,"Lynchburg, VA",2025-11,279373,-3.8%,374,7.2%,163,152,41,48.5%,2.46,159,8.9%,60,SLIGHTLY_BULLISH,78.0,GO DEEP,master_tsv
+12,"Goldsboro, NC",2025-11,241229,33.2%,168,13.5%,41,36,37,-4.6%,4.67,34,-15.0%,60,SLIGHTLY_BULLISH,73.8,GO DEEP,master_tsv
+13,"Greeneville, TN",2025-11,273496,-2.0%,136,15.3%,28,32,69,20.6%,4.25,39,95.0%,61,SLIGHTLY_BULLISH,73.2,GO DEEP,master_tsv
+14,"Point Pleasant, WV",2025-11,220000,20.2%,10,-50.0%,2,5,39,-34.2%,2.0,7,-12.5%,73,BULLISH,71.7,GO DEEP,master_tsv
+15,"Charlotte, NC",2025-11,431896,2.3%,8922,9.9%,2124,1980,68,,4.51,0,,48,NEUTRAL,71.4,GO DEEP,C:\Users\1\Documents\GitHub\realtor monthly data analysis\charlotte_cities_filtered.tsv
+16,"Charleston, WV",2025-11,165385,-9.2%,243,3.4%,96,83,46,86.5%,2.93,92,-8.9%,47,NEUTRAL,70.8,GO DEEP,master_tsv
+17,"Blacksburg, VA",2025-11,317578,5.8%,207,23.2%,80,95,37,32.7%,2.18,82,-7.9%,47,NEUTRAL,70.8,GO DEEP,master_tsv
+18,"Richmond, VA",2025-11,375110,-3.0%,1403,-1.9%,584,686,31,50.0%,2.05,680,-6.6%,47,NEUTRAL,70.8,GO DEEP,master_tsv
+19,"Virginia Beach, VA",2025-11,365443,4.1%,3885,-0.8%,1668,1514,41,15.2%,2.57,1755,-0.2%,47,NEUTRAL,70.8,GO DEEP,master_tsv
+20,"Johnson City, TN",2025-11,295368,7.4%,554,18.6%,153,149,60,14.3%,3.72,179,9.1%,47,NEUTRAL,70.8,GO DEEP,master_tsv
+21,"Asheville, NC",2025-11,446074,-12.5%,1846,36.0%,316,338,89,0.8%,5.46,339,0.3%,47,NEUTRAL,70.8,GO DEEP,master_tsv
+22,"Durham, NC",2025-11,426030,-5.2%,1454,44.1%,339,337,42,35.5%,4.31,349,7.1%,47,NEUTRAL,70.8,GO DEEP,master_tsv
+23,"Pinehurst, NC",2025-11,520014,-1.4%,578,43.4%,130,116,64,4.7%,4.98,119,-1.7%,47,NEUTRAL,70.8,GO DEEP,master_tsv
+24,"Rocky Mount, NC",2025-11,193625,-9.6%,301,9.5%,72,53,51,2.1%,5.68,46,-41.0%,47,NEUTRAL,70.8,GO DEEP,master_tsv
+25,"Winston-Salem, NC",2025-11,291578,-0.5%,1377,9.1%,398,377,42,9.1%,3.65,407,-11.1%,47,NEUTRAL,70.8,GO DEEP,master_tsv
+26,"Winchester, VA",2025-11,362198,-0.6%,155,-4.9%,51,47,61,8.2%,3.3,39,-36.1%,47,NEUTRAL,70.0,WATCH,master_tsv
+27,"Albemarle, NC",2025-11,302399,-5.1%,236,15.7%,41,45,65,-12.5%,5.24,43,-24.6%,47,NEUTRAL,69.3,WATCH,master_tsv
+28,"Forest City, NC",2025-11,331310,5.8%,167,-7.7%,24,30,134,39.3%,5.57,29,16.0%,54,NEUTRAL,68.7,WATCH,master_tsv
+29,"Laurinburg, NC",2025-11,125071,-48.7%,66,20.0%,18,14,49,-35.0%,4.71,16,-11.1%,60,SLIGHTLY_BULLISH,67.2,WATCH,master_tsv
+30,"Danville, VA",2025-11,175597,-4.6%,215,19.4%,59,36,63,-3.5%,5.97,46,-9.8%,47,NEUTRAL,66.7,WATCH,master_tsv
+31,"Fairmont, WV",2025-11,185516,-3.1%,79,-2.5%,28,31,72,-23.4%,2.55,30,-3.2%,47,NEUTRAL,65.2,WATCH,master_tsv
+32,"Martinsville, VA",2025-11,149658,-6.6%,105,7.1%,24,31,64,-27.5%,3.39,30,-25.0%,47,NEUTRAL,65.2,WATCH,master_tsv
+33,"Kingsport, TN",2025-11,264210,4.5%,855,26.7%,211,203,71,10.5%,4.21,201,-15.2%,34,BEARISH,63.7,WATCH,master_tsv
+34,"Burlington, NC",2025-11,310318,-8.7%,476,-18.4%,134,132,59,25.8%,3.61,132,-32.0%,34,BEARISH,63.7,WATCH,master_tsv
+35,"Fayetteville, NC",2025-11,270581,2.0%,1481,16.7%,409,294,49,16.4%,5.04,379,-14.3%,34,BEARISH,63.7,WATCH,master_tsv
+36,"Greensboro, NC",2025-11,284215,-2.1%,1599,7.3%,495,470,51,19.3%,3.4,528,-2.6%,34,BEARISH,63.7,WATCH,master_tsv
+37,"Greenville, NC",2025-11,262931,2.9%,381,11.1%,130,107,52,14.0%,3.56,123,0.0%,34,BEARISH,63.7,WATCH,master_tsv
+38,"Hickory, NC",2025-11,351905,2.9%,993,-3.9%,238,209,74,-4.0%,4.75,221,-12.3%,34,BEARISH,63.7,WATCH,master_tsv
+39,"Raleigh, NC",2025-11,469176,2.0%,4179,25.0%,1065,1102,55,56.3%,3.79,1203,-0.4%,34,BEARISH,63.7,WATCH,master_tsv
+40,"Boone, NC",2025-11,660810,12.1%,243,31.4%,27,37,106,1.6%,6.57,54,38.5%,41,SLIGHTLY_BEARISH,63.6,WATCH,master_tsv
+41,"Shelby, NC",2025-11,237369,-8.3%,214,-14.7%,47,46,74,9.7%,4.65,43,-14.0%,34,BEARISH,62.5,WATCH,master_tsv
+42,"Elkins, WV",2025-11,234000,49.0%,24,-7.7%,5,6,127,62.8%,4.0,6,20.0%,54,NEUTRAL,61.5,WATCH,master_tsv
+43,"Kinston, NC",2025-11,171842,-15.3%,98,42.0%,31,19,68,-30.0%,5.16,20,-9.1%,47,NEUTRAL,61.5,WATCH,master_tsv
+44,"Lumberton, NC",2025-11,219588,-5.0%,67,-16.2%,19,17,58,-8.7%,3.94,16,-33.3%,47,NEUTRAL,61.0,WATCH,master_tsv
+45,"Morgantown, WV",2025-11,269679,10.4%,169,-19.1%,47,39,82,6.9%,4.33,56,-3.4%,34,BEARISH,60.4,WATCH,master_tsv
+46,"Bluefield, WV",2025-11,169319,9.5%,136,19.3%,30,26,96,-1.3%,5.23,32,6.7%,40,SLIGHTLY_BEARISH,59.8,WATCH,master_tsv
+47,"Mount Gay, WV",2025-11,128366,-11.5%,2,,0,6,74,-13.2%,0.33,0,-100.0%,47,NEUTRAL,57.7,WATCH,master_tsv
+48,"Clarksburg, WV",2025-11,179448,-20.9%,125,-5.3%,23,29,79,4.8%,4.31,31,-3.1%,34,BEARISH,57.4,WATCH,master_tsv
+49,"Beckley, WV",2025-11,187423,19.3%,172,25.5%,33,26,67,-18.6%,6.62,41,-6.8%,34,BEARISH,56.5,WATCH,master_tsv
+50,"Mount Airy, NC",2025-11,235711,-12.6%,83,20.3%,20,17,82,14.7%,4.88,17,-32.0%,34,BEARISH,53.8,WATCH,master_tsv
+51,"Marion, NC",2025-11,223593,-29.1%,63,46.5%,7,16,85,25.6%,3.94,8,-46.7%,34,BEARISH,53.5,WATCH,master_tsv
+52,"Rockingham, NC",2025-11,151350,-21.9%,69,72.5%,20,10,74,53.3%,6.9,19,5.6%,34,BEARISH,51.7,WATCH,master_tsv
+53,"Sanford, NC",2025-11,313034,-2.2%,195,12.1%,45,29,72,-30.4%,6.72,37,-30.2%,21,BEARISH,50.2,WATCH,master_tsv
+54,"Henderson, NC",2025-11,263000,81.4%,53,23.3%,13,11,91,468.8%,4.82,10,-28.6%,27,BEARISH,48.2,AVOID,master_tsv
+55,"Big Stone Gap, VA",2025-11,125000,-35.3%,55,139.1%,8,10,96,71.9%,5.5,6,0.0%,27,BEARISH,47.9,AVOID,master_tsv
+56,"Newport, TN",2025-11,292450,4.4%,27,-18.2%,5,4,153,50.0%,6.75,6,-40.0%,14,BEARISH,38.9,AVOID,master_tsv

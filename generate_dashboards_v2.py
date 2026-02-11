@@ -7,6 +7,13 @@ Generates interactive HTML dashboards with historical trends and city comparison
 import json
 from pathlib import Path
 
+
+def load_metro_config(config_path: Path) -> dict:
+    """Load metro configuration from JSON file."""
+    with open(config_path, 'r') as f:
+        return json.load(f)
+
+
 def generate_enhanced_dashboard(data_file: str, output_file: str):
     """Generate enhanced HTML dashboard with metro trends + city comparison"""
 
@@ -2103,27 +2110,31 @@ def find_latest_data_file(metro_dir: Path, metro_name: str) -> tuple:
 
 
 def main():
-    """Generate dashboards for both metros"""
+    """Generate dashboards for enabled metros from metro_config.json."""
 
     base_dir = Path(__file__).parent
+    config_file = base_dir / 'metro_config.json'
+    if not config_file.exists():
+        raise FileNotFoundError("metro_config.json not found")
 
-    # Charlotte - auto-detect latest period
-    charlotte_data_file, charlotte_period = find_latest_data_file(
-        base_dir / 'charlotte', 'charlotte'
-    )
-    generate_enhanced_dashboard(
-        data_file=charlotte_data_file,
-        output_file=str(base_dir / 'charlotte' / charlotte_period / f'dashboard_enhanced_charlotte_{charlotte_period}.html')
-    )
+    config = load_metro_config(config_file)
+    metros = [m for m in config.get('metros', []) if m.get('enabled', True)]
+    if not metros:
+        raise ValueError("No enabled metros found in metro_config.json")
 
-    # Roanoke - auto-detect latest period
-    roanoke_data_file, roanoke_period = find_latest_data_file(
-        base_dir / 'roanoke', 'roanoke'
-    )
-    generate_enhanced_dashboard(
-        data_file=roanoke_data_file,
-        output_file=str(base_dir / 'roanoke' / roanoke_period / f'dashboard_enhanced_roanoke_{roanoke_period}.html')
-    )
+    for metro in metros:
+        metro_slug = metro.get('name')
+        if not metro_slug:
+            raise ValueError("Metro config entry missing required field: name")
+
+        metro_output_dir = base_dir / metro.get('output_directory', metro_slug)
+        data_file, period = find_latest_data_file(metro_output_dir, metro_slug)
+        dashboard_file = metro_output_dir / period / f'dashboard_enhanced_{metro_slug}_{period}.html'
+
+        generate_enhanced_dashboard(
+            data_file=data_file,
+            output_file=str(dashboard_file)
+        )
 
     print("\n[OK] All enhanced dashboards generated!")
 
