@@ -2,6 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Canonical AI Ops Playbook
+- Follow `docs/ai/PLAYBOOK.md` as the canonical workflow for sessions.
+- End meaningful sessions with a handoff in `docs/handoffs/` using `docs/handoffs/TEMPLATE.md`.
+- Log regressions in `docs/ai/LESSONS.md`, append `docs/DEVLOG.md`, and record durable architecture choices in `docs/decisions/`.
+
 ## Project Overview
 
 Automated pipeline for analyzing Redfin city-level market data for real estate markets (Charlotte, NC and Roanoke, VA). Processes monthly TSV data from Redfin Data Center into JSON and interactive HTML dashboards.

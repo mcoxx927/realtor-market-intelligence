@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "[HOOK] Running verify checks"
+
+if command -v pwsh >/dev/null 2>&1; then
+  pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1 -Fast
+elif command -v powershell >/dev/null 2>&1; then
+  powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1 -Fast
+else
+  echo "[HOOK][WARN] PowerShell not found; skipping verify checks (non-blocking)."
+  exit 0
+fi

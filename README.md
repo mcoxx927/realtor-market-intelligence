@@ -156,6 +156,31 @@ Notes:
 - Output: `market_radar/outputs/YYYY-MM/`
 - The radar uses existing metro outputs from configured metro directories when available.
 
+## Distressed Market Fit (Add-on)
+
+Run:
+
+```bash
+python market_radar/run_distressed_fit.py
+```
+
+Useful flags:
+
+- `--month YYYY-MM`
+- `--limit N`
+- `--with-backtest`
+- `--competition-csv path/to/competition_proxy.csv`
+- `--housing-age-csv path/to/housing_age_proxy.csv`
+
+Notes:
+
+- Config: `market_radar/distressed_fit_config.yaml`
+- Optional external proxy inputs: `market_radar/inputs/competition_proxy.csv`, `market_radar/inputs/housing_age_proxy.csv`
+- Outputs: `market_radar/outputs_distressed_fit/YYYY-MM/`
+  - `distressed_fit_ranked.csv`
+  - `distressed_fit_ranked.md`
+  - `distressed_fit_diagnostics.json`
+
 ## Troubleshooting
 
 - If emails reference the wrong month, verify all scripts are writing to the same `output_directory` tree in `metro_config.json`.
