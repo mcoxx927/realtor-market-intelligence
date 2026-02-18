@@ -27,9 +27,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90  # Well within GHA's 6-hour limit; pipeline has its own 30-min/script timeout
 
-    # All env vars come from GitHub Secrets — notifications_config.json
-    # is gitignored, but email_reports.py and ai_narrative.py both read
-    # these env vars directly, so no config file is needed.
     env:
       SMTP_HOST: ${{ secrets.SMTP_HOST }}
       SMTP_PORT: ${{ secrets.SMTP_PORT }}
@@ -38,6 +35,10 @@ jobs:
       EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
       EMAIL_RECIPIENTS: ${{ secrets.EMAIL_RECIPIENTS }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      # ANTHROPIC_MODEL is a GitHub Variable (not a secret — model names aren't sensitive).
+      # Set it at: repo Settings → Secrets and variables → Actions → Variables tab.
+      # If unset, ai_narrative.py falls back to its hardcoded default.
+      ANTHROPIC_MODEL: ${{ vars.ANTHROPIC_MODEL }}
 
     steps:
       - name: Checkout repository
@@ -48,6 +49,27 @@ jobs:
         with:
           python-version: '3.12'
           cache: 'pip'
+
+      - name: Write notifications_config.json
+        # notifications_config.json is gitignored (contains local secrets).
+        # We reconstruct a CI-safe version here so ai_narrative.py picks up
+        # the correct model. Email credentials come from env vars, which
+        # email_reports.py reads directly, so only the ai_narrative block
+        # needs to be in the file.
+        run: |
+          MODEL="${ANTHROPIC_MODEL:-claude-opus-4-5-20251101}"
+          cat > notifications_config.json <<EOF
+          {
+            "ai_narrative": {
+              "enabled": false,
+              "api_key": "",
+              "model": "${MODEL}",
+              "max_tokens": 2000,
+              "generate_for_all_metros": true
+            }
+          }
+          EOF
+          echo "Config written with model: ${MODEL}"
 
       - name: Install dependencies
         run: |
