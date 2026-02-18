@@ -72,15 +72,7 @@ jobs:
           echo "Config written with model: ${MODEL}"
 
       - name: Install dependencies
-        run: |
-          pip install pandas
-          # Only install anthropic SDK if an API key is configured
-          if [ -n "$ANTHROPIC_API_KEY" ]; then
-            pip install anthropic
-            echo "Anthropic SDK installed — AI narratives enabled"
-          else
-            echo "No ANTHROPIC_API_KEY set — AI narratives will be skipped"
-          fi
+        run: pip install -r requirements.txt
 
       - name: Fetch Redfin data
         run: |
