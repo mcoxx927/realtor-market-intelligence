@@ -1,0 +1,108 @@
+name: Monthly Market Analysis
+
+on:
+  schedule:
+    # Run on the 22nd of each month at 14:00 UTC (9 AM EST / 10 AM EDT).
+    # Redfin releases data on the Friday of the 3rd full week (~15th-21st),
+    # so the 22nd gives a comfortable 1+ day buffer.
+    - cron: '0 14 22 * *'
+
+  # Manual trigger with optional flags — useful for testing or
+  # re-running if Redfin's release was delayed.
+  workflow_dispatch:
+    inputs:
+      skip_ai:
+        description: 'Skip AI narrative generation'
+        required: false
+        default: 'false'
+        type: boolean
+      force_fetch:
+        description: 'Force re-download of Redfin data (ignore cache)'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90  # Well within GHA's 6-hour limit; pipeline has its own 30-min/script timeout
+
+    # All env vars come from GitHub Secrets — notifications_config.json
+    # is gitignored, but email_reports.py and ai_narrative.py both read
+    # these env vars directly, so no config file is needed.
+    env:
+      SMTP_HOST: ${{ secrets.SMTP_HOST }}
+      SMTP_PORT: ${{ secrets.SMTP_PORT }}
+      SMTP_USER: ${{ secrets.SMTP_USER }}
+      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+      EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+      EMAIL_RECIPIENTS: ${{ secrets.EMAIL_RECIPIENTS }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install pandas
+          # Only install anthropic SDK if an API key is configured
+          if [ -n "$ANTHROPIC_API_KEY" ]; then
+            pip install anthropic
+            echo "Anthropic SDK installed — AI narratives enabled"
+          else
+            echo "No ANTHROPIC_API_KEY set — AI narratives will be skipped"
+          fi
+
+      - name: Fetch Redfin data
+        run: |
+          if [ "${{ github.event.inputs.force_fetch }}" = "true" ]; then
+            python fetch_redfin_data.py --force
+          else
+            python fetch_redfin_data.py
+          fi
+
+      - name: Run analysis pipeline
+        run: |
+          if [ "${{ github.event.inputs.skip_ai }}" = "true" ]; then
+            python run_scheduled.py --no-fetch --no-ai
+          else
+            python run_scheduled.py --no-fetch
+          fi
+        # --no-fetch: data was already downloaded in the previous step,
+        # which lets us fail fast on fetch errors before spending time on processing.
+
+      - name: Upload market dashboards
+        uses: actions/upload-artifact@v4
+        if: always()  # Upload even if pipeline partially failed — partial outputs are useful
+        with:
+          name: market-dashboards-${{ github.run_id }}
+          path: |
+            core_markets/charlotte/
+            core_markets/roanoke/
+          if-no-files-found: warn
+          retention-days: 90  # Free tier: 500 MB total; these outputs are small
+
+      - name: Upload market radar outputs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: market-radar-${{ github.run_id }}
+          path: market_radar/outputs/
+          if-no-files-found: ignore
+          retention-days: 90
+
+      - name: Upload pipeline log
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pipeline-log-${{ github.run_id }}
+          path: pipeline_runs.log
+          if-no-files-found: ignore
+          retention-days: 30
